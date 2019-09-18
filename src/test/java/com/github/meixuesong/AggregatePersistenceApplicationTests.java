@@ -1,4 +1,4 @@
-package cn.meixs.aggregatepersistence;
+package com.github.meixuesong;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
