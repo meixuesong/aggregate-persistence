@@ -8,5 +8,9 @@ import org.springframework.stereotype.Service;
 public interface UserMapper {
     User findById(String id);
 
-    void save(User user);
+    void insert(User user);
+
+    int update(User user);
+
+    void remove(String id);
 }
