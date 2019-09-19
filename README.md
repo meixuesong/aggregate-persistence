@@ -1,5 +1,8 @@
 # aggregate-persistence
 
+![](https://travis-ci.com/meixuesong/aggregate-persistence.svg?branch=master)
+
+
 ## Prepare MySQL
 
 Run MySQL in Docker
