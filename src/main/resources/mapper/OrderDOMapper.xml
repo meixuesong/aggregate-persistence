@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.meixuesong.order.dao.OrderDOMapper">
+  <resultMap id="BaseResultMap" type="com.github.meixuesong.order.dao.OrderDO">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
+    <result column="total_price" jdbcType="DECIMAL" property="totalPrice" />
+    <result column="total_payment" jdbcType="DECIMAL" property="totalPayment" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, create_time, customer_id, total_price, total_payment, status, version
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sale_order
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from sale_order
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.github.meixuesong.order.dao.OrderDO">
+    insert into sale_order (id, create_time, customer_id,
+      total_price, total_payment, status, version
+      )
+    values (#{id,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{customerId,jdbcType=VARCHAR},
+      #{totalPrice,jdbcType=DECIMAL}, #{totalPayment,jdbcType=DECIMAL}, #{status,jdbcType=TINYINT}, #{version,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.github.meixuesong.order.dao.OrderDO">
+    insert into sale_order
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="totalPrice != null">
+        total_price,
+      </if>
+      <if test="totalPayment != null">
+        total_payment,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="version != null">
+        version,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="customerId != null">
+        #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="totalPrice != null">
+        #{totalPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="totalPayment != null">
+        #{totalPayment,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="version != null">
+        #{version,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.github.meixuesong.order.dao.OrderDO">
+    update sale_order
+    <set>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="customerId != null">
+        customer_id = #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="totalPrice != null">
+        total_price = #{totalPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="totalPayment != null">
+        total_payment = #{totalPayment,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="version != null">
+        version = version + 1,
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.github.meixuesong.order.dao.OrderDO">
+    update sale_order
+    set create_time = #{createTime,jdbcType=TIMESTAMP},
+      customer_id = #{customerId,jdbcType=VARCHAR},
+      total_price = #{totalPrice,jdbcType=DECIMAL},
+      total_payment = #{totalPayment,jdbcType=DECIMAL},
+      status = #{status,jdbcType=TINYINT},
+      version = version + 1
+    where id = #{id,jdbcType=VARCHAR} and version = #{version,jdbcType=INTEGER}
+  </update>
+</mapper>

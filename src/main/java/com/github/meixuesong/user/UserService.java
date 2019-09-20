@@ -4,8 +4,6 @@ import com.github.meixuesong.common.Aggregate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
-
 @Service
 public class UserService {
     private UserRepository repository;
@@ -24,11 +22,7 @@ public class UserService {
     public User findUserById(String id) {
         Aggregate<User> userAggregate = repository.findById(id);
 
-        if (userAggregate != null) {
-            return userAggregate.getRoot();
-        }
-
-        throw new EntityNotFoundException();
+        return userAggregate.getRoot();
     }
 
     public void updatePhone(String id, String newPhone) {

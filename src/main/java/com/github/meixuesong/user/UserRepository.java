@@ -4,6 +4,9 @@ import com.github.meixuesong.common.Aggregate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.EntityNotFoundException;
+
+
 @Repository
 public class UserRepository {
 
@@ -30,7 +33,7 @@ public class UserRepository {
         User user = mapper.findById(id);
 
         if (user == null) {
-            return null;
+            throw new EntityNotFoundException("User("+id+") not found");
         }
 
         return new Aggregate<>(user);

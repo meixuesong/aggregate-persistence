@@ -9,7 +9,7 @@
         <result column="address" property="address" jdbcType="VARCHAR"/>
     </resultMap>
 
-    <select id="findById" parameterType="String" resultMap="UserMap" resultType="com.github.meixuesong.user.User">
+    <select id="findById" parameterType="String" resultMap="UserMap">
         SELECT * FROM user WHERE id = #{id}
     </select>
 
