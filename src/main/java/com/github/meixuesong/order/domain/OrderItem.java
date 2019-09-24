@@ -16,6 +16,10 @@ public class OrderItem {
     }
 
     public OrderItem(Long id, Product product, BigDecimal amount) {
+        if (product == null) {
+            throw new IllegalArgumentException("product is null");
+        }
+
         this.id = id;
         this.product = product;
         this.amount = amount;

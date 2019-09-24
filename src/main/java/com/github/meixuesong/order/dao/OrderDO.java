@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
-@Builder
 public class OrderDO {
     private String id;
     private Date createTime;
@@ -18,6 +17,9 @@ public class OrderDO {
     private BigDecimal totalPrice = BigDecimal.ZERO;
     private BigDecimal totalPayment = BigDecimal.ZERO;
     private int version;
+
+    public OrderDO() {
+    }
 
     public Order toOrder() {
         Order order = new Order();
@@ -30,4 +32,15 @@ public class OrderDO {
 
         return order;
     }
+
+    public OrderDO(Order order) {
+        setId(order.getId());
+        setCreateTime(order.getCreateTime());
+        setCustomerId(order.getCustomer().getId());
+        setStatus(order.getStatus().getValue());
+        setTotalPayment(order.getTotalPayment());
+        setTotalPrice(order.getTotalPrice());
+        setVersion(order.getVersion());
+    }
+
 }

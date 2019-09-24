@@ -1,10 +1,12 @@
 package com.github.meixuesong.common;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class Aggregate<R extends Versionable> {
     private R root;
     private R snapshot;
+    private Gson gson;
 
     public Aggregate(R root) {
         this.root = root;
@@ -12,10 +14,19 @@ public class Aggregate<R extends Versionable> {
     }
 
     private R createSnapshot() {
-        Gson gson = new Gson();
-        String json = gson.toJson(root);
+        String json = getGson().toJson(root);
 
-        return gson.fromJson(json, (Class<R>) (root.getClass()));
+        return getGson().fromJson(json, (Class<R>) (root.getClass()));
+    }
+
+    private Gson getGson() {
+        if (gson == null) {
+            gson = new GsonBuilder()
+                    .setDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                    .create();
+        }
+
+        return gson;
     }
 
 
@@ -24,9 +35,8 @@ public class Aggregate<R extends Versionable> {
     }
 
     public boolean isChanged() {
-        Gson gson = new Gson();
-        String currentJson = gson.toJson(root);
-        String snapshotJson = gson.toJson(snapshot);
+        String currentJson = getGson().toJson(root);
+        String snapshotJson = getGson().toJson(snapshot);
 
         return !snapshotJson.equals(currentJson);
     }
@@ -34,5 +44,4 @@ public class Aggregate<R extends Versionable> {
     public boolean isNew() {
         return root.getVersion() == Versionable.NEW_VERSION;
     }
-
 }

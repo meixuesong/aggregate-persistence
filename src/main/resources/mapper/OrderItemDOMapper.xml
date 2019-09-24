@@ -33,6 +33,21 @@
     values (#{id,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{prodId,jdbcType=VARCHAR},
       #{amount,jdbcType=DECIMAL}, #{subTotal,jdbcType=DECIMAL})
   </insert>
+
+  <insert id="insertAll" parameterType="java.util.List">
+    insert into order_item (id, order_id, prod_id, amount, sub_total)
+    values
+    <foreach collection="list" item="element" index="index" open="(" separator="),("  close=")">
+      #{element.id,jdbcType=VARCHAR},
+      #{element.orderId,jdbcType=VARCHAR},
+      #{element.prodId,jdbcType=VARCHAR},
+      #{element.amount,jdbcType=DECIMAL},
+      #{element.subTotal,jdbcType=DECIMAL}
+    </foreach>
+
+  </insert>
+
+
   <insert id="insertSelective" parameterType="com.github.meixuesong.order.dao.OrderItemDO">
     insert into order_item
     <trim prefix="(" suffix=")" suffixOverrides=",">

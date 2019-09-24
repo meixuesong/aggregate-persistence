@@ -12,6 +12,10 @@ public enum OrderStatus {
         this.value = value;
     }
 
+    public int getValue() {
+        return value;
+    }
+
     public static OrderStatus from(int status) {
         for (OrderStatus s : OrderStatus.values()) {
             if (s.value == status) {

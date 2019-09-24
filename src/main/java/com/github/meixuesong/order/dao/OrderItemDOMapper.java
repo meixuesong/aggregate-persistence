@@ -21,4 +21,6 @@ public interface OrderItemDOMapper {
     int updateByPrimaryKey(OrderItemDO record);
 
     List<OrderItemDO> selectByOrderId(String orderId);
+
+    void insertAll(List<OrderItemDO> itemDOs);
 }

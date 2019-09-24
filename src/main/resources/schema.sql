@@ -1,4 +1,4 @@
-create table user (
+create table if not exists user (
   id varchar(20) not null,
   name varchar(40) not null,
   phone varchar(20),
@@ -7,7 +7,7 @@ create table user (
   primary key(id)
 );
 
-create table sale_order (
+create table if not exists sale_order (
     id varchar(20) not null,
     create_time datetime not null,
     customer_id varchar(20) not null,
@@ -18,14 +18,14 @@ create table sale_order (
     primary key (id)
 );
 
-create table product (
+create table if not exists product (
     id varchar(20) not null,
     name varchar(200) not null,
     price decimal(12,2) not null default 0,
     primary key (id)
 );
 
-create table order_item (
+create table if not exists order_item (
     id bigint auto_increment,
     order_id varchar(20) not null,
     prod_id varchar(20) not null,
@@ -34,7 +34,7 @@ create table order_item (
     primary key (id)
 );
 
-create table customer (
+create table if not exists customer (
     id varchar(20) not null,
     name varchar(40) not null,
     primary key (id)
