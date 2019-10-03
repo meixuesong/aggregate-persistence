@@ -2,9 +2,7 @@ package com.github.meixuesong.order.domain;
 
 import com.github.meixuesong.common.Versionable;
 import com.github.meixuesong.order.OrderPaymentException;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -38,5 +36,9 @@ public class Order implements Versionable {
     @Override
     public void increaseVersion() {
         version++;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
     }
 }

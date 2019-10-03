@@ -13,6 +13,7 @@ import com.github.meixuesong.order.domain.Product;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,11 +62,33 @@ public class OrderRepository {
             Order order = orderAggregate.getRoot();
             order.increaseVersion();
 
-            OrderDO orderDO = new OrderDO(order);
-            orderMapper.insert(orderDO);
+            orderMapper.insert(new OrderDO(order));
 
             List<OrderItemDO> itemDOs = order.getItems().stream().map(item -> new OrderItemDO(order.getId(), item)).collect(Collectors.toList());
             orderItemMapper.insertAll(itemDOs);
+        } else if (orderAggregate.isChanged()) {
+            Order order = orderAggregate.getRoot();
+            orderMapper.updateByPrimaryKey(new OrderDO(order));
+
+            Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
+            removedEntities.stream().forEach((item) -> {
+                if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
+                    throw new EntityNotFoundException(String.format("Delete order item (%d) error, it's not found", item.getId()));
+                }
+            });
+
+            Collection<OrderItem> updatedEntities = orderAggregate.findUpdatedEntities(Order::getItems, OrderItem::getId);
+            updatedEntities.stream().forEach((item) -> {
+                if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(order.getId(), item)) != 1) {
+                    throw new EntityNotFoundException(String.format("Update order item (%d) error, it's not found", item.getId()));
+                }
+            });
+
+            Collection<OrderItem> newEntities = orderAggregate.findInsertedEntities(Order::getItems, (item) -> item.getId() == null);
+            if (newEntities.size() > 0) {
+                List<OrderItemDO> itemDOs = newEntities.stream().map(item -> new OrderItemDO(order.getId(), item)).collect(Collectors.toList());
+                orderItemMapper.insertAll(itemDOs);
+            }
         }
     }
 

@@ -2,6 +2,7 @@ package com.github.meixuesong.order;
 
 import com.github.meixuesong.ApiTest;
 import com.github.meixuesong.order.domain.Order;
+import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class OrderControllerTest extends ApiTest {
     @Sql(scripts = "classpath:sql/order-test-before.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:sql/order-test-after.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void should_query_order() {
+        String customerId = "TEST_USER_ID";
         String orderId = "TEST_ORDER";
         ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
 
@@ -26,7 +28,7 @@ public class OrderControllerTest extends ApiTest {
 
         Order order = responseEntity.getBody();
         assertThat(order.getId()).isEqualTo(orderId);
-        assertThat(order.getCustomer().getId()).isEqualTo("TEST_USER_ID");
+        assertThat(order.getCustomer().getId()).isEqualTo(customerId);
         assertThat(order.getItems()).hasSize(2);
     }
 
@@ -53,5 +55,92 @@ public class OrderControllerTest extends ApiTest {
         assertThat(order.getId()).isNotNull();
         assertThat(order.getCustomer().getId()).isEqualTo(customerId);
         assertThat(order.getItems()).hasSize(2);
+    }
+
+    @Test
+    @Sql(scripts = "classpath:sql/order-test-before.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:sql/order-test-after.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void should_support_update_order() {
+        //Given
+        String orderId = "TEST_ORDER";
+        String newCustomerId = "NEW_TEST_USER_ID";
+
+        ArrayList<OrderItemRequest> items = new ArrayList<>();
+        items.add(new OrderItemRequest("PROD1", new BigDecimal("1.00")));
+        items.add(new OrderItemRequest("PROD2", BigDecimal.TEN));
+
+        ChangeOrderRequest request = new ChangeOrderRequest(orderId, newCustomerId, items);
+
+        //When
+        this.restTemplate.put(baseUrl + "/orders/"+ orderId, request);
+
+        //Then
+        ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Order order = responseEntity.getBody();
+        assertThat(order.getId()).isEqualTo(orderId);
+        assertThat(order.getCustomer().getId()).isEqualTo(newCustomerId);
+        assertThat(order.getItems()).hasSize(2);
+        assertThat(order.getItems().get(0).getAmount()).isCloseTo(BigDecimal.ONE, Offset.offset(BigDecimal.ZERO));
+        assertThat(order.getItems().get(1).getAmount()).isCloseTo(BigDecimal.TEN, Offset.offset(BigDecimal.ZERO));
+    }
+
+    @Test
+    @Sql(scripts = "classpath:sql/order-test-before.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:sql/order-test-after.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void should_support_new_order_item() {
+        //Given
+        String orderId = "TEST_ORDER";
+        String newCustomerId = "TEST_USER_ID";
+
+        ArrayList<OrderItemRequest> items = new ArrayList<>();
+        items.add(new OrderItemRequest("PROD1", new BigDecimal("1.00")));
+        items.add(new OrderItemRequest("PROD2", BigDecimal.TEN));
+        items.add(new OrderItemRequest("PROD3", BigDecimal.TEN));
+
+        ChangeOrderRequest request = new ChangeOrderRequest(orderId, newCustomerId, items);
+
+        //When
+        this.restTemplate.put(baseUrl + "/orders/"+ orderId, request);
+
+        //Then
+        ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Order order = responseEntity.getBody();
+        assertThat(order.getId()).isEqualTo(orderId);
+        assertThat(order.getCustomer().getId()).isEqualTo(newCustomerId);
+        assertThat(order.getItems()).hasSize(3);
+        assertThat(order.getItems().get(0).getAmount()).isCloseTo(BigDecimal.ONE, Offset.offset(BigDecimal.ZERO));
+        assertThat(order.getItems().get(1).getAmount()).isCloseTo(BigDecimal.TEN, Offset.offset(BigDecimal.ZERO));
+        assertThat(order.getItems().get(2).getAmount()).isCloseTo(BigDecimal.TEN, Offset.offset(BigDecimal.ZERO));
+    }
+
+    @Test
+    @Sql(scripts = "classpath:sql/order-test-before.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:sql/order-test-after.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void should_support_remove_orderItems() {
+        //Given
+        String orderId = "TEST_ORDER";
+        String customerId = "TEST_USER_ID";
+
+        ArrayList<OrderItemRequest> items = new ArrayList<>();
+        items.add(new OrderItemRequest("PROD1", BigDecimal.TEN));
+
+        ChangeOrderRequest request = new ChangeOrderRequest(orderId, customerId, items);
+
+        //When
+        this.restTemplate.put(baseUrl + "/orders/"+ orderId, request);
+
+        //Then
+        ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Order order = responseEntity.getBody();
+        assertThat(order.getId()).isEqualTo(orderId);
+        assertThat(order.getCustomer().getId()).isEqualTo(customerId);
+        assertThat(order.getItems()).hasSize(1);
+        assertThat(order.getItems().get(0).getAmount()).isCloseTo(BigDecimal.TEN, Offset.offset(BigDecimal.ZERO));
     }
 }

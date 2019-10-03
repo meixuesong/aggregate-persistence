@@ -23,13 +23,21 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
-        Order order = factory.createOrder(request);
+        Aggregate<Order> aggregate = factory.createOrder(request);
 
-        orderRepository.save(new Aggregate<>(order));
+        orderRepository.save(aggregate);
 
-        Aggregate<Order> orderAggregate = orderRepository.findById(order.getId());
+        Aggregate<Order> orderAggregate = orderRepository.findById(aggregate.getRoot().getId());
         return orderAggregate.getRoot();
     }
 
+    @Transactional
+    public Order updateOrder(ChangeOrderRequest request) {
+        Aggregate<Order> aggregate = factory.getOrder(request);
 
+        orderRepository.save(aggregate);
+
+        Aggregate<Order> orderAggregate = orderRepository.findById(request.getOrderId());
+        return orderAggregate.getRoot();
+    }
 }

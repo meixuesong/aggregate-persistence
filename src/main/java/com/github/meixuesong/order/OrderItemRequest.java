@@ -24,4 +24,5 @@ public class OrderItemRequest {
     public BigDecimal getAmount() {
         return amount;
     }
+
 }

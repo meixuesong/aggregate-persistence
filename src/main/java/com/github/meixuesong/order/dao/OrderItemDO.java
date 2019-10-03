@@ -1,7 +1,6 @@
 package com.github.meixuesong.order.dao;
 
 import com.github.meixuesong.order.domain.OrderItem;
-import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
