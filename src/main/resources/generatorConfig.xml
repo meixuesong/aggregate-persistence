@@ -3,31 +3,26 @@
         PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
         "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
 <generatorConfiguration>
+
     <classPathEntry location="/Users/meixuesong/Develop/mvn_repository/mysql/mysql-connector-java/5.1.41/mysql-connector-java-5.1.41.jar"/>
+
     <context id="DDDProject" targetRuntime="MyBatis3">
         <commentGenerator>
             <property name="suppressDate" value="true"/>
             <property name="suppressAllComments" value="true"/>
         </commentGenerator>
-        <!--数据库链接地址账号密码-->
+
         <jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://localhost:3306/dddproject?autoReconnect=true&amp;useSSL=false" userId="ddduser" password="dddpassword">
         </jdbcConnection>
-        <!--生成Model类存放位置-->
+
         <javaModelGenerator targetPackage="com.github.meixuesong.autogen.dataobject" targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
-            <!-- 从数据库返回的值被清理前后的空格 -->
             <property name="trimStrings" value="false"/>
         </javaModelGenerator>
-        <!--生成映射文件存放位置-->
         <sqlMapGenerator targetPackage="autogen.mapper" targetProject="src/main/resources">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
-        <!--生成Dao类存放位置-->
-        <!-- 客户端代码，生成易于使用的针对Model对象和XML配置文件 的代码
-                type="ANNOTATEDMAPPER",生成Java Model 和基于注解的Mapper对象
-                type="MIXEDMAPPER",生成基于注解的Java Model 和相应的Mapper对象
-                type="XMLMAPPER",生成SQLMap XML文件和独立的Mapper接口
-        -->
+
         <javaClientGenerator type="XMLMAPPER" targetPackage="com.github.meixuesong.autogen.dao" targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
