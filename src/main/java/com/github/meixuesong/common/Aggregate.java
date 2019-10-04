@@ -79,18 +79,16 @@ public class Aggregate<R extends Versionable> {
     private R createSnapshot() {
         String json = getJson(root);
 
-        ObjectMapper mapper = getObjectMapper();
         try {
-            return mapper.readValue(json, (Class<R>) (root.getClass()));
+            return getObjectMapper().readValue(json, (Class<R>) (root.getClass()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     private String getJson(Object object) {
-        ObjectMapper mapper = getObjectMapper();
         try {
-            return mapper.writeValueAsString(object);
+            return getObjectMapper().writeValueAsString(object);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

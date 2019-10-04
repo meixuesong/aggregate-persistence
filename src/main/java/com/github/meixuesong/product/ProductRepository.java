@@ -1,8 +1,5 @@
-package com.github.meixuesong.order;
+package com.github.meixuesong.product;
 
-import com.github.meixuesong.order.dao.ProductDO;
-import com.github.meixuesong.order.dao.ProductDOMapper;
-import com.github.meixuesong.order.domain.Product;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

@@ -1,7 +1,12 @@
 package com.github.meixuesong.order;
 
 import com.github.meixuesong.common.Aggregate;
+import com.github.meixuesong.order.api.ChangeOrderRequest;
+import com.github.meixuesong.order.api.CheckoutRequest;
+import com.github.meixuesong.order.api.CreateOrderRequest;
 import com.github.meixuesong.order.domain.Order;
+import com.github.meixuesong.order.domain.Payment;
+import com.github.meixuesong.order.domain.PaymentType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,5 +52,16 @@ public class OrderService {
         aggregate.getRoot().discard();
 
         orderRepository.remove(aggregate);
+    }
+
+    @Transactional
+    public void checkout(String orderId, CheckoutRequest request) {
+        Aggregate<Order> aggregate = orderRepository.findById(orderId);
+        Order order = aggregate.getRoot();
+
+        Payment payment = new Payment(PaymentType.from(request.getPaymentType()), request.getAmount());
+        order.checkout(payment);
+
+        orderRepository.save(aggregate);
     }
 }

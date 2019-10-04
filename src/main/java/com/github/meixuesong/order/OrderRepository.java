@@ -1,18 +1,20 @@
 package com.github.meixuesong.order;
 
 import com.github.meixuesong.common.Aggregate;
-import com.github.meixuesong.order.dao.CustomerDO;
-import com.github.meixuesong.order.dao.CustomerDOMapper;
+import com.github.meixuesong.customer.CustomerDO;
+import com.github.meixuesong.customer.CustomerDOMapper;
 import com.github.meixuesong.order.dao.OrderDO;
 import com.github.meixuesong.order.dao.OrderDOMapper;
 import com.github.meixuesong.order.dao.OrderItemDO;
 import com.github.meixuesong.order.dao.OrderItemDOMapper;
 import com.github.meixuesong.order.domain.Order;
 import com.github.meixuesong.order.domain.OrderItem;
-import com.github.meixuesong.order.domain.Product;
+import com.github.meixuesong.product.Product;
+import com.github.meixuesong.product.ProductRepository;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.OptimisticLockException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +62,7 @@ public class OrderRepository {
     public void remove(Aggregate<Order> aggregate) {
         Order order = aggregate.getRoot();
         if (orderMapper.delete(new OrderDO(order)) != 1) {
-            throw new RuntimeException(String.format("Delete order (%s) error, it's not found or changed by another user", order.getId()));
+            throw new OptimisticLockException(String.format("Delete order (%s) error, it's not found or changed by another user", order.getId()));
         }
         orderItemMapper.deleteByOrderId(order.getId());
     }
@@ -89,7 +91,7 @@ public class OrderRepository {
     private void updateAggregateRoot(Aggregate<Order> orderAggregate) {
         Order order = orderAggregate.getRoot();
         if (orderMapper.updateByPrimaryKey(new OrderDO(order)) != 1) {
-            throw new RuntimeException(String.format("Update order (%s) error, it's not found or changed by another user", order.getId()));
+            throw new OptimisticLockException(String.format("Update order (%s) error, it's not found or changed by another user", order.getId()));
         };
     }
 
@@ -105,7 +107,7 @@ public class OrderRepository {
         Collection<OrderItem> updatedEntities = orderAggregate.findUpdatedEntities(Order::getItems, OrderItem::getId);
         updatedEntities.stream().forEach((item) -> {
             if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(orderAggregate.getRoot().getId(), item)) != 1) {
-                throw new EntityNotFoundException(String.format("Update order item (%d) error, it's not found", item.getId()));
+                throw new OptimisticLockException(String.format("Update order item (%d) error, it's not found", item.getId()));
             }
         });
     }
@@ -114,7 +116,7 @@ public class OrderRepository {
         Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
         removedEntities.stream().forEach((item) -> {
             if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
-                throw new EntityNotFoundException(String.format("Delete order item (%d) error, it's not found", item.getId()));
+                throw new OptimisticLockException(String.format("Delete order item (%d) error, it's not found", item.getId()));
             }
         });
     }

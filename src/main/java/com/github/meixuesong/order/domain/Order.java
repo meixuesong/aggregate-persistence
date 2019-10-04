@@ -1,7 +1,7 @@
 package com.github.meixuesong.order.domain;
 
 import com.github.meixuesong.common.Versionable;
-import com.github.meixuesong.order.OrderPaymentException;
+import com.github.meixuesong.customer.Customer;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -20,16 +20,21 @@ public class Order implements Versionable {
     private BigDecimal totalPayment = BigDecimal.ZERO;
     private int version;
 
-    public void checkout(BigDecimal money) {
-        this.totalPayment = money;
-        validatePayments();
+    public void checkout(Payment payment) {
+        if (status == OrderStatus.NEW) {
+            totalPayment = payment.getAmount();
+            validatePayments();
+            this.status = OrderStatus.PAID;
+        } else {
+            throw new OrderPaymentException("The order status is not for payment.");
+        }
     }
 
     private void validatePayments() {
         if (totalPayment.compareTo(totalPrice) != 0) {
             DecimalFormat decimalFormat = new DecimalFormat("0.00");
-            throw new OrderPaymentException(String.format("付款金额不等于应收金额, 应付：%s, 实付：%s",
-                    decimalFormat.format(totalPrice), decimalFormat.format(totalPayment)));
+            throw new OrderPaymentException(String.format("Payment (%s) is not equals to total price (%s)",
+                    decimalFormat.format(totalPayment), decimalFormat.format(totalPrice)));
         }
     }
 

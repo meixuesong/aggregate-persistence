@@ -1,4 +1,4 @@
-package com.github.meixuesong.order;
+package com.github.meixuesong.order.api;
 
 import lombok.Data;
 

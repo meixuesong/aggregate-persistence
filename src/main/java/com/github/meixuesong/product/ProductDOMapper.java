@@ -1,4 +1,4 @@
-package com.github.meixuesong.order.dao;
+package com.github.meixuesong.product;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;

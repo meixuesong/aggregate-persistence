@@ -1,7 +1,8 @@
 package com.github.meixuesong.order.domain;
 
 public enum PaymentType {
-    BALANCE_OF_ACCOUNT("余额支付");
+    CASH("CASH"),
+    CREDIT_CARD("CREDIT_CARD");
 
     private String value;
 

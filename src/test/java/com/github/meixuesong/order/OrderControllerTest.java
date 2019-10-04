@@ -1,7 +1,12 @@
 package com.github.meixuesong.order;
 
 import com.github.meixuesong.ApiTest;
+import com.github.meixuesong.order.api.ChangeOrderRequest;
+import com.github.meixuesong.order.api.CheckoutRequest;
+import com.github.meixuesong.order.api.CreateOrderRequest;
+import com.github.meixuesong.order.api.OrderItemRequest;
 import com.github.meixuesong.order.domain.Order;
+import com.github.meixuesong.order.domain.OrderStatus;
 import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
@@ -131,4 +136,23 @@ public class OrderControllerTest extends ApiTest {
         ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    @Sql(scripts = "classpath:sql/order-test-before.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:sql/order-test-after.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void should_checkout_order() {
+        //Given
+        String orderId = "TEST_ORDER";
+        BigDecimal amount = new BigDecimal("9000");
+        CheckoutRequest request = new CheckoutRequest("CASH", amount);
+
+        //When
+        this.restTemplate.postForLocation(baseUrl + "/orders/"+orderId+"/payment", request);
+
+        //Then
+        ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
+        assertThat(responseEntity.getBody().getTotalPayment()).isCloseTo(amount, Offset.offset(new BigDecimal("0.0001")));
+        assertThat(responseEntity.getBody().getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
 }

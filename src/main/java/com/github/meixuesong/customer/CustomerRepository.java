@@ -1,15 +1,12 @@
-package com.github.meixuesong.order;
+package com.github.meixuesong.customer;
 
-import com.github.meixuesong.order.dao.CustomerDO;
-import com.github.meixuesong.order.dao.CustomerDOMapper;
-import com.github.meixuesong.order.domain.Customer;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class MemberRepository {
+public class CustomerRepository {
     private CustomerDOMapper mapper;
 
-    public MemberRepository(CustomerDOMapper mapper) {
+    public CustomerRepository(CustomerDOMapper mapper) {
         this.mapper = mapper;
     }
 

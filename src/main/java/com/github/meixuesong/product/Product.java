@@ -1,4 +1,4 @@
-package com.github.meixuesong.order.domain;
+package com.github.meixuesong.product;
 
 import lombok.Data;
 

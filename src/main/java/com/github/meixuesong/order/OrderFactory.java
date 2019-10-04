@@ -2,10 +2,15 @@ package com.github.meixuesong.order;
 
 import com.github.meixuesong.common.Aggregate;
 import com.github.meixuesong.common.Versionable;
+import com.github.meixuesong.customer.CustomerRepository;
+import com.github.meixuesong.order.api.ChangeOrderRequest;
+import com.github.meixuesong.order.api.CreateOrderRequest;
+import com.github.meixuesong.order.api.OrderItemRequest;
 import com.github.meixuesong.order.domain.Order;
 import com.github.meixuesong.order.domain.OrderItem;
 import com.github.meixuesong.order.domain.OrderStatus;
-import com.github.meixuesong.order.domain.Product;
+import com.github.meixuesong.product.Product;
+import com.github.meixuesong.product.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,13 +20,13 @@ import java.util.stream.Collectors;
 @Service
 public class OrderFactory {
     private OrderIdGenerator idGenerator;
-    private MemberRepository memberRepository;
+    private CustomerRepository customerRepository;
     private ProductRepository productRepository;
     private OrderRepository orderRepository;
 
-    public OrderFactory(OrderIdGenerator idGenerator, MemberRepository memberRepository, ProductRepository productRepository, OrderRepository orderRepository) {
+    public OrderFactory(OrderIdGenerator idGenerator, CustomerRepository customerRepository, ProductRepository productRepository, OrderRepository orderRepository) {
         this.idGenerator = idGenerator;
-        this.memberRepository = memberRepository;
+        this.customerRepository = customerRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
     }
@@ -31,7 +36,7 @@ public class OrderFactory {
 
         order.setId(idGenerator.generateId());
         order.setCreateTime(request.getCreateTime());
-        order.setCustomer(memberRepository.findById(request.getCustomerId()));
+        order.setCustomer(customerRepository.findById(request.getCustomerId()));
         order.setItems(getNewOrderItems(request.getItems()));
         order.setVersion(Versionable.NEW_VERSION);
         order.setStatus(OrderStatus.NEW);
@@ -43,7 +48,7 @@ public class OrderFactory {
         Aggregate<Order> aggregate = orderRepository.findById(request.getOrderId());
         Order order = aggregate.getRoot();
 
-        order.setCustomer(memberRepository.findById(request.getCustomerId()));
+        order.setCustomer(customerRepository.findById(request.getCustomerId()));
         order.setItems(getUpdatedOrderItems(order.getItems(), request));
 
         return aggregate;

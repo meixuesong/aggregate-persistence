@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.github.meixuesong.order.dao.CustomerDOMapper">
-  <resultMap id="BaseResultMap" type="com.github.meixuesong.order.dao.CustomerDO">
+<mapper namespace="com.github.meixuesong.customer.CustomerDOMapper">
+  <resultMap id="BaseResultMap" type="com.github.meixuesong.customer.CustomerDO">
     <id column="id" jdbcType="VARCHAR" property="id" />
     <result column="name" jdbcType="VARCHAR" property="name" />
   </resultMap>
@@ -18,11 +18,11 @@
     delete from customer
     where id = #{id,jdbcType=VARCHAR}
   </delete>
-  <insert id="insert" parameterType="com.github.meixuesong.order.dao.CustomerDO">
+  <insert id="insert" parameterType="com.github.meixuesong.customer.CustomerDO">
     insert into customer (id, name)
     values (#{id,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.github.meixuesong.order.dao.CustomerDO">
+  <insert id="insertSelective" parameterType="com.github.meixuesong.customer.CustomerDO">
     insert into customer
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -41,7 +41,7 @@
       </if>
     </trim>
   </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.github.meixuesong.order.dao.CustomerDO">
+  <update id="updateByPrimaryKeySelective" parameterType="com.github.meixuesong.customer.CustomerDO">
     update customer
     <set>
       <if test="name != null">
@@ -50,7 +50,7 @@
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.github.meixuesong.order.dao.CustomerDO">
+  <update id="updateByPrimaryKey" parameterType="com.github.meixuesong.customer.CustomerDO">
     update customer
     set name = #{name,jdbcType=VARCHAR}
     where id = #{id,jdbcType=VARCHAR}

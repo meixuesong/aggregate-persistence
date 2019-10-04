@@ -1,6 +1,6 @@
-package com.github.meixuesong.order.dao;
+package com.github.meixuesong.product;
 
-import com.github.meixuesong.order.domain.Product;
+import com.github.meixuesong.product.Product;
 import lombok.Builder;
 import lombok.Data;
 

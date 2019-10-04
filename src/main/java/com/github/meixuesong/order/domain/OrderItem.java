@@ -1,5 +1,6 @@
 package com.github.meixuesong.order.domain;
 
+import com.github.meixuesong.product.Product;
 import lombok.Data;
 
 import java.math.BigDecimal;

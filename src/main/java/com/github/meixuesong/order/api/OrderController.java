@@ -1,5 +1,6 @@
-package com.github.meixuesong.order;
+package com.github.meixuesong.order.api;
 
+import com.github.meixuesong.order.OrderService;
 import com.github.meixuesong.order.domain.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,5 +51,11 @@ public class OrderController {
     @ResponseStatus(HttpStatus.OK)
     public void discardOrder(@PathVariable String id) {
         orderService.discardOrder(id);
+    }
+
+    @PostMapping("/{id}/payment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void checkout(@PathVariable String id, @RequestBody CheckoutRequest request) {
+        orderService.checkout(id, request);
     }
 }
