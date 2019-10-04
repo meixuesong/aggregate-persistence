@@ -40,4 +40,12 @@ public class OrderService {
         Aggregate<Order> orderAggregate = orderRepository.findById(request.getOrderId());
         return orderAggregate.getRoot();
     }
+
+    @Transactional
+    public void discardOrder(String orderId) {
+        Aggregate<Order> aggregate = orderRepository.findById(orderId);
+        aggregate.getRoot().discard();
+
+        orderRepository.remove(aggregate);
+    }
 }

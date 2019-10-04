@@ -41,4 +41,12 @@ public class Order implements Versionable {
     public List<OrderItem> getItems() {
         return items;
     }
+
+    public void discard() {
+        if (status != OrderStatus.NEW) {
+            throw new RuntimeException("Only new order can be discardOrder.");
+        }
+
+        this.status = OrderStatus.DISCARD;
+    }
 }

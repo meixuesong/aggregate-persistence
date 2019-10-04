@@ -123,24 +123,12 @@ public class OrderControllerTest extends ApiTest {
     public void should_support_remove_orderItems() {
         //Given
         String orderId = "TEST_ORDER";
-        String customerId = "TEST_USER_ID";
-
-        ArrayList<OrderItemRequest> items = new ArrayList<>();
-        items.add(new OrderItemRequest("PROD1", BigDecimal.TEN));
-
-        ChangeOrderRequest request = new ChangeOrderRequest(orderId, customerId, items);
 
         //When
-        this.restTemplate.put(baseUrl + "/orders/"+ orderId, request);
+        this.restTemplate.delete(baseUrl + "/orders/"+ orderId);
 
         //Then
         ResponseEntity<Order> responseEntity = this.restTemplate.getForEntity(baseUrl + "/orders/" + orderId, Order.class);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Order order = responseEntity.getBody();
-        assertThat(order.getId()).isEqualTo(orderId);
-        assertThat(order.getCustomer().getId()).isEqualTo(customerId);
-        assertThat(order.getItems()).hasSize(1);
-        assertThat(order.getItems().get(0).getAmount()).isCloseTo(BigDecimal.TEN, Offset.offset(BigDecimal.ZERO));
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

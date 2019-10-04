@@ -2,6 +2,7 @@ package com.github.meixuesong.order.domain;
 
 public enum OrderStatus {
     NEW(0),
+    DISCARD(-1),
     PAID(10),
     DELIVERING(20),
     DELIVERED(30);

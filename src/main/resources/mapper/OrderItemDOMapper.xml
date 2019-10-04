@@ -27,6 +27,10 @@
     delete from order_item
     where id = #{id,jdbcType=BIGINT}
   </delete>
+  <delete id="deleteByOrderId" parameterType="java.lang.String">
+    delete from order_item
+    where order_id = #{id,jdbcType=VARCHAR}
+  </delete>
   <insert id="insert" parameterType="com.github.meixuesong.order.dao.OrderItemDO">
     insert into order_item (id, order_id, prod_id,
       amount, sub_total)

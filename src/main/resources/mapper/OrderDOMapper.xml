@@ -19,9 +19,9 @@
     from sale_order
     where id = #{id,jdbcType=VARCHAR}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+  <delete id="delete" parameterType="com.github.meixuesong.order.dao.OrderDO">
     delete from sale_order
-    where id = #{id,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR} and version = #{version,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="com.github.meixuesong.order.dao.OrderDO">
     insert into sale_order (id, create_time, customer_id,

@@ -23,4 +23,6 @@ public interface OrderItemDOMapper {
     List<OrderItemDO> selectByOrderId(String orderId);
 
     void insertAll(List<OrderItemDO> itemDOs);
+
+    void deleteByOrderId(String orderId);
 }

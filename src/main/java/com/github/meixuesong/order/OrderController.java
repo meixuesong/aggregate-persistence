@@ -2,6 +2,7 @@ package com.github.meixuesong.order;
 
 import com.github.meixuesong.order.domain.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,4 +46,9 @@ public class OrderController {
         return order;
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void discardOrder(@PathVariable String id) {
+        orderService.discardOrder(id);
+    }
 }
