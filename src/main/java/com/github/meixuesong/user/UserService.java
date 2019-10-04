@@ -29,10 +29,6 @@ public class UserService {
     public void updatePhone(String id, String newPhone) {
         Aggregate<User> userAggregate = repository.findById(id);
 
-        if (userAggregate == null) {
-            return;
-        }
-
         User user = userAggregate.getRoot();
         user.setPhone(newPhone);
 

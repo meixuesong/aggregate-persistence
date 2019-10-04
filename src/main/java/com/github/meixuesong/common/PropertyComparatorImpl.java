@@ -27,7 +27,7 @@ public class PropertyComparatorImpl implements PropertyComparator {
         }
     }
 
-    private ObjectMapper getMapper() {
+    private synchronized ObjectMapper getMapper() {
         if (mapper == null) {
             createObjectMapper();
         }
@@ -35,7 +35,7 @@ public class PropertyComparatorImpl implements PropertyComparator {
         return mapper;
     }
 
-    private synchronized void createObjectMapper() {
+    private void createObjectMapper() {
         if (this.mapper == null) {
             ObjectMapper mapper = new ObjectMapper();
             mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));

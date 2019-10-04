@@ -22,7 +22,7 @@ public class DeepCopierImpl implements DeepCopier {
         }
     }
 
-    private ObjectMapper getMapper() {
+    private synchronized ObjectMapper getMapper() {
         if (mapper == null) {
             createObjectMapper();
         }
@@ -30,7 +30,7 @@ public class DeepCopierImpl implements DeepCopier {
         return mapper;
     }
 
-    private synchronized void createObjectMapper() {
+    private void createObjectMapper() {
         if (this.mapper == null) {
             ObjectMapper mapper = new ObjectMapper();
             mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
