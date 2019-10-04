@@ -1,10 +1,12 @@
 package com.github.meixuesong.user;
 
 import com.github.meixuesong.common.Aggregate;
+import com.github.meixuesong.common.AggregateFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.OptimisticLockException;
 
 
 @Repository
@@ -19,12 +21,11 @@ public class UserRepository {
 
     public void save(Aggregate<User> userAggregate) {
         if (userAggregate.isNew()) {
-            userAggregate.getRoot().increaseVersion();
             mapper.insert(userAggregate.getRoot());
         } else if (userAggregate.isChanged()) {
-            int rowsUpdated = mapper.update(userAggregate.getRoot());
-            if (rowsUpdated != 1) {
-                throw new RuntimeException("修改失败，未找到或者已经被其它用户修改。");
+            if (mapper.update(userAggregate.getRoot()) != 1) {
+                throw new OptimisticLockException(
+                        String.format("Update user (%s) error, it's not found or changed by another user", userAggregate.getRoot().getId()));
             }
         }
     }
@@ -36,7 +37,7 @@ public class UserRepository {
             throw new EntityNotFoundException("User("+id+") not found");
         }
 
-        return new Aggregate<>(user);
+        return AggregateFactory.createAggregate(user);
     }
 
     public void remove(String id) {

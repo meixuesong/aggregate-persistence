@@ -28,7 +28,7 @@
       total_price, total_payment, status, version
       )
     values (#{id,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{customerId,jdbcType=VARCHAR},
-      #{totalPrice,jdbcType=DECIMAL}, #{totalPayment,jdbcType=DECIMAL}, #{status,jdbcType=TINYINT}, #{version,jdbcType=INTEGER}
+      #{totalPrice,jdbcType=DECIMAL}, #{totalPayment,jdbcType=DECIMAL}, #{status,jdbcType=TINYINT}, 1
       )
   </insert>
   <insert id="insertSelective" parameterType="com.github.meixuesong.order.dao.OrderDO">
@@ -52,9 +52,7 @@
       <if test="status != null">
         status,
       </if>
-      <if test="version != null">
         version,
-      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -75,9 +73,7 @@
       <if test="status != null">
         #{status,jdbcType=TINYINT},
       </if>
-      <if test="version != null">
-        #{version,jdbcType=INTEGER},
-      </if>
+        1,
     </trim>
   </insert>
   <update id="updateByPrimaryKeySelective" parameterType="com.github.meixuesong.order.dao.OrderDO">

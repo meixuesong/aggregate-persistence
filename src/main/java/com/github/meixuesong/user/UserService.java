@@ -1,6 +1,7 @@
 package com.github.meixuesong.user;
 
 import com.github.meixuesong.common.Aggregate;
+import com.github.meixuesong.common.AggregateFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +15,7 @@ public class UserService {
     }
 
     public User save(User user) {
-        repository.save(new Aggregate<>(user));
+        repository.save(AggregateFactory.createAggregate(user));
 
         return repository.findById(user.getId()).getRoot();
     }

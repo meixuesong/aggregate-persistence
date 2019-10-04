@@ -1,6 +1,7 @@
 package com.github.meixuesong.order;
 
 import com.github.meixuesong.common.Aggregate;
+import com.github.meixuesong.common.AggregateFactory;
 import com.github.meixuesong.common.Versionable;
 import com.github.meixuesong.customer.CustomerRepository;
 import com.github.meixuesong.order.api.ChangeOrderRequest;
@@ -41,7 +42,7 @@ public class OrderFactory {
         order.setVersion(Versionable.NEW_VERSION);
         order.setStatus(OrderStatus.NEW);
 
-        return new Aggregate<>(order);
+        return AggregateFactory.createAggregate(order);
     }
 
     public Aggregate<Order> getOrder(ChangeOrderRequest request) {

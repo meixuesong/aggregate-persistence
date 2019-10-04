@@ -15,7 +15,7 @@
 
     <insert id="insert" parameterType="com.github.meixuesong.user.User">
       insert into user (id,name,phone,address, version)
-      values (#{id},#{name},#{phone},#{address}, #{version})
+      values (#{id},#{name},#{phone},#{address}, 1)
     </insert>
 
     <update id="update" parameterType="com.github.meixuesong.user.User">

@@ -27,8 +27,4 @@ public class DataClass implements Versionable{
         return this.version;
     }
 
-    @Override
-    public void increaseVersion() {
-        this.version++;
-    }
 }

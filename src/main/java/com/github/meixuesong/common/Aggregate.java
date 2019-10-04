@@ -1,12 +1,5 @@
 package com.github.meixuesong.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -15,13 +8,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Aggregate<R extends Versionable> {
-    private R root;
-    private R snapshot;
-    private ObjectMapper mapper;
+    protected R root;
+    protected R snapshot;
+    protected PropertyComparator propertyComparator;
 
-    public Aggregate(R root) {
+    Aggregate(R root, DeepCopier copier, PropertyComparator propertyComparator) {
         this.root = root;
-        this.snapshot = createSnapshot();
+        this.snapshot = copier.copy(root);
+        this.propertyComparator = propertyComparator;
     }
 
     public R getRoot() {
@@ -29,7 +23,7 @@ public class Aggregate<R extends Versionable> {
     }
 
     public boolean isChanged() {
-        return !isAllPropertiesEqual(root, snapshot);
+        return !propertyComparator.isAllPropertiesEqual(root, snapshot);
     }
 
     public boolean isNew() {
@@ -56,7 +50,7 @@ public class Aggregate<R extends Versionable> {
             T oldEntity = getEntity(oldEntities, id, getId);
             T newEntity = getEntity(newEntities, id, getId);
 
-            if (!isAllPropertiesEqual(oldEntity, newEntity)) {
+            if (!propertyComparator.isAllPropertiesEqual(oldEntity, newEntity)) {
                 results.add(newEntity);
             }
         }
@@ -76,44 +70,8 @@ public class Aggregate<R extends Versionable> {
         return oldEntities.stream().filter(item -> oldIds.contains(getId.apply(item))).collect(Collectors.toList());
     }
 
-    private R createSnapshot() {
-        String json = getJson(root);
-
-        try {
-            return getObjectMapper().readValue(json, (Class<R>) (root.getClass()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getJson(Object object) {
-        try {
-            return getObjectMapper().writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private ObjectMapper getObjectMapper() {
-        if (mapper == null) {
-            mapper = new ObjectMapper();
-            mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
-            mapper.registerModule(new JavaTimeModule());
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        }
-
-        return mapper;
-    }
-
     private <T, ID> Set<ID> getEntityIds(Collection<T> entity, Function<T, ID> getId) {
         return entity.stream().map(item -> getId.apply(item)).collect(Collectors.toSet());
-    }
-
-    private <T> boolean isAllPropertiesEqual(T entity1, T entity2) {
-        String entityJson1 = getJson(entity1);
-        String entityJson2 = getJson(entity2);
-
-        return entityJson2.equals(entityJson1);
     }
 
     private <T, ID> T getEntity(Collection<T> entities, ID id, Function<T, ID> getId) {

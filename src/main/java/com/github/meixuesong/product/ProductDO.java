@@ -1,6 +1,5 @@
 package com.github.meixuesong.product;
 
-import com.github.meixuesong.product.Product;
 import lombok.Builder;
 import lombok.Data;
 

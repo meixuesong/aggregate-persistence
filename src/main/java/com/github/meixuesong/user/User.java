@@ -26,8 +26,4 @@ public class User implements Versionable {
         return version;
     }
 
-    @Override
-    public void increaseVersion() {
-        version++;
-    }
 }

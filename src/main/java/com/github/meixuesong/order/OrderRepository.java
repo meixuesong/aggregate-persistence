@@ -1,8 +1,8 @@
 package com.github.meixuesong.order;
 
 import com.github.meixuesong.common.Aggregate;
-import com.github.meixuesong.customer.CustomerDO;
-import com.github.meixuesong.customer.CustomerDOMapper;
+import com.github.meixuesong.common.AggregateFactory;
+import com.github.meixuesong.customer.CustomerRepository;
 import com.github.meixuesong.order.dao.OrderDO;
 import com.github.meixuesong.order.dao.OrderDOMapper;
 import com.github.meixuesong.order.dao.OrderItemDO;
@@ -25,13 +25,13 @@ public class OrderRepository {
     private OrderDOMapper orderMapper;
     private OrderItemDOMapper orderItemMapper;
     private ProductRepository productRepository;
-    private CustomerDOMapper customerMapper;
+    private CustomerRepository customerRepository;
 
-    public OrderRepository(OrderDOMapper orderMapper, OrderItemDOMapper orderItemMapper, ProductRepository productRepository, CustomerDOMapper customerMapper) {
+    public OrderRepository(OrderDOMapper orderMapper, OrderItemDOMapper orderItemMapper, ProductRepository productRepository, CustomerRepository customerRepository) {
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.productRepository = productRepository;
-        this.customerMapper = customerMapper;
+        this.customerRepository = customerRepository;
     }
 
     public Aggregate<Order> findById(String id) {
@@ -41,11 +41,10 @@ public class OrderRepository {
         }
 
         Order order = orderDO.toOrder();
-        CustomerDO customerDO = customerMapper.selectByPrimaryKey(orderDO.getCustomerId());
-        order.setCustomer(customerDO.toCustomer());
+        order.setCustomer(customerRepository.findById(orderDO.getCustomerId()));
         order.setItems(getOrderItems(id));
 
-        return new Aggregate<>(order);
+        return AggregateFactory.createAggregate(order);
     }
 
     public void save(Aggregate<Order> orderAggregate) {
@@ -80,8 +79,6 @@ public class OrderRepository {
 
     private void insertNewAggregate(Aggregate<Order> orderAggregate) {
         Order order = orderAggregate.getRoot();
-        order.increaseVersion();
-
         orderMapper.insert(new OrderDO(order));
 
         List<OrderItemDO> itemDOs = order.getItems().stream().map(item -> new OrderItemDO(order.getId(), item)).collect(Collectors.toList());

@@ -16,7 +16,7 @@ public class AggregateTest {
     @Test
     public void should_be_unchanged_when_no_fields_changed() {
         DataClass data = new DataClass();
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         assertThat(aggregate.isChanged(), is(false));
     }
@@ -24,7 +24,7 @@ public class AggregateTest {
     @Test
     public void should_be_changed_when_int_field_changed() {
         DataClass data = new DataClass();
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setAge(10);
 
@@ -34,7 +34,7 @@ public class AggregateTest {
     @Test
     public void should_be_changed_when_boolean_field_changed() {
         DataClass data = new DataClass();
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setChecked(false);
 
@@ -45,7 +45,7 @@ public class AggregateTest {
     public void should_be_changed_when_float_field_changed() {
         DataClass data = new DataClass();
         data.setLength(10.0123456789F);
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setLength(10.0123456F);
         assertThat(aggregate.isChanged(), is(false));
@@ -58,7 +58,7 @@ public class AggregateTest {
     public void should_be_changed_when_double_field_changed() {
         DataClass data = new DataClass();
         data.setArea(123456789*0.001*0.000123456789D);
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setArea(123456789*0.001*0.00012345678D);
         assertThat(aggregate.isChanged(), is(true));
@@ -68,7 +68,7 @@ public class AggregateTest {
     public void should_be_changed_when_bigdecimal_field_changed() {
         DataClass data = new DataClass();
         data.setMoney(new BigDecimal("0.00000000001"));
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setMoney(new BigDecimal("0.000000000001"));
         assertThat(aggregate.isChanged(), is(true));
@@ -79,7 +79,7 @@ public class AggregateTest {
         DataClass data = new DataClass();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         data.setBirthday(dateFormat.parse("2019-01-09 23:45:13.666"));
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setBirthday(dateFormat.parse("2019-01-09 23:45:13.667"));
         assertThat(aggregate.isChanged(), is(true));
@@ -89,7 +89,7 @@ public class AggregateTest {
     public void should_be_changed_when_localdate_field_changed() {
         DataClass data = new DataClass();
         data.setMeetingTime(LocalDate.of(2019, 1, 20));
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setMeetingTime(LocalDate.of(2019, 1, 21));
         assertThat(aggregate.isChanged(), is(true));
@@ -98,7 +98,7 @@ public class AggregateTest {
     @Test
     public void should_be_changed_when_collection_field_changed() {
         DataClass data = new DataClass();
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         data.setChildren(Arrays.asList(new DataClass()));
         assertThat(aggregate.isChanged(), is(true));
@@ -109,7 +109,7 @@ public class AggregateTest {
         DataClass data = new DataClass();
         DataClass child = new DataClass();
         data.setChildren(Arrays.asList(child));
-        Aggregate<DataClass> aggregate = new Aggregate<>(data);
+        Aggregate<DataClass> aggregate = AggregateFactory.createAggregate(data);
 
         child.setAge(child.getAge() + 1);
         assertThat(aggregate.isChanged(), is(true));
