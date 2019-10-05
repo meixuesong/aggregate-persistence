@@ -20,7 +20,7 @@
 
     <developers>
         <developer>
-            <name>Mei Xuesong</name>
+            <name>Xuesong Mei</name>
             <email>meixuesong@gmail.com</email>
             <organization></organization>
             <organizationUrl>https://github.com/meixuesong</organizationUrl>
@@ -76,11 +76,6 @@
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
         </dependency>
 
         <dependency>

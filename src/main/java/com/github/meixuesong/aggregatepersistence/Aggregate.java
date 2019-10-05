@@ -22,6 +22,10 @@ public class Aggregate<R extends Versionable> {
         return root;
     }
 
+    public R getRootSnapshot() {
+        return snapshot;
+    }
+
     public boolean isChanged() {
         return !propertyComparator.isAllPropertiesEqual(root, snapshot);
     }
