@@ -1,4 +1,4 @@
-package com.github.meixuesong.common;
+package com.github.meixuesong.aggregatepersistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -7,16 +7,21 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
-public class DeepCopierImpl implements DeepCopier {
-
+public class JsonComparator implements PropertyComparator {
     private ObjectMapper mapper;
 
     @Override
-    public <T> T copy(T object) {
-        try {
-            String json = getMapper().writeValueAsString(object);
+    public <T> boolean isAllPropertiesEqual(T a, T b) {
+        String jsonA = getJson(a);
+        String jsonB = getJson(b);
 
-            return getMapper().readValue(json, (Class<T>) (object.getClass()));
+        return jsonB.equals(jsonA);
+    }
+
+
+    private <T> String getJson(T object) {
+        try {
+            return getMapper().writeValueAsString(object);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -40,4 +45,5 @@ public class DeepCopierImpl implements DeepCopier {
             this.mapper = mapper;
         }
     }
+
 }

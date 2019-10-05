@@ -1,4 +1,4 @@
-package com.github.meixuesong.common;
+package com.github.meixuesong.aggregatepersistence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,13 +30,13 @@ public class Aggregate<R extends Versionable> {
         return root.getVersion() == Versionable.NEW_VERSION;
     }
 
-    public <T> Collection<T> findInsertedEntities(Function<R, Collection<T>> getCollection, Predicate<T> isNew) {
+    public <T> Collection<T> findNewEntities(Function<R, Collection<T>> getCollection, Predicate<T> isNew) {
         Collection<T> newEntities = getCollection.apply(root);
 
         return newEntities.stream().filter(isNew).collect(Collectors.toList());
     }
 
-    public <T, ID> Collection<T> findUpdatedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
+    public <T, ID> Collection<T> findChangedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Collection<T> newEntities = getCollection.apply(root);
         Collection<T> oldEntities = getCollection.apply(snapshot);
 

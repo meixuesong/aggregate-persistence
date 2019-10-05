@@ -1,4 +1,4 @@
-package com.github.meixuesong.common;
+package com.github.meixuesong.aggregatepersistence;
 
 import lombok.Data;
 
@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class DataClass implements Versionable{
+public class SampleEntity implements Versionable{
     private String id = "";
     private boolean checked = true;
     private int age = 0;
@@ -19,8 +19,8 @@ public class DataClass implements Versionable{
     private BigDecimal money = BigDecimal.ZERO;
     private Date birthday = new Date();
     private LocalDate meetingTime = LocalDate.now();
-    private List<DataClass> children = new ArrayList<>();
-    private int version = 0;
+    private List<SampleEntity> children = new ArrayList<>();
+    private int version = Versionable.NEW_VERSION;
 
     @Override
     public int getVersion() {
