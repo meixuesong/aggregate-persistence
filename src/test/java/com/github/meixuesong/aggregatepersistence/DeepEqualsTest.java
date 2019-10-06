@@ -39,24 +39,21 @@ import static org.junit.Assert.assertTrue;
 
 public class DeepEqualsTest {
     @Test
-    public void testSameObjectEquals()
-    {
+    public void testSameObjectEquals() {
         Date date1 = new Date();
         Date date2 = date1;
         assertTrue(DeepEquals.deepEquals(date1, date2));
     }
 
     @Test
-    public void testEqualsWithNull()
-    {
+    public void testEqualsWithNull() {
         Date date1 = new Date();
         assertFalse(DeepEquals.deepEquals(null, date1));
         assertFalse(DeepEquals.deepEquals(date1, null));
     }
 
     @Test
-    public void testDeepEqualsWithOptions()
-    {
+    public void testDeepEqualsWithOptions() {
         Person p1 = new Person("Jim Bob", 27);
         Person p2 = new Person("Jim Bob", 34);
         assert p1.equals(p2);
@@ -78,8 +75,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testAtomicStuff()
-    {
+    public void testAtomicStuff() {
         AtomicWrapper atomic1 = new AtomicWrapper(35);
         AtomicWrapper atomic2 = new AtomicWrapper(35);
         AtomicWrapper atomic3 = new AtomicWrapper(42);
@@ -106,14 +102,12 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testDifferentClasses()
-    {
+    public void testDifferentClasses() {
         assertFalse(DeepEquals.deepEquals(new Date(), "test"));
     }
 
     @Test
-    public void testPOJOequals()
-    {
+    public void testPOJOequals() {
         Class1 x = new Class1(true, tan(PI / 4), 1);
         Class1 y = new Class1(true, 1.0, 1);
         assertTrue(DeepEquals.deepEquals(x, y));
@@ -130,24 +124,22 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testPrimitiveArrays()
-    {
-        int array1[] = { 2, 4, 5, 6, 3, 1, 3, 3, 5, 22 };
-        int array2[] = { 2, 4, 5, 6, 3, 1, 3, 3, 5, 22 };
+    public void testPrimitiveArrays() {
+        int array1[] = {2, 4, 5, 6, 3, 1, 3, 3, 5, 22};
+        int array2[] = {2, 4, 5, 6, 3, 1, 3, 3, 5, 22};
 
         assertTrue(DeepEquals.deepEquals(array1, array2));
 
-        int array3[] = { 3, 4, 7 };
+        int array3[] = {3, 4, 7};
 
         assertFalse(DeepEquals.deepEquals(array1, array3));
 
-        float array4[] = { 3.4f, 5.5f };
+        float array4[] = {3.4f, 5.5f};
         assertFalse(DeepEquals.deepEquals(array1, array4));
     }
 
     @Test
-    public void testOrderedCollection()
-    {
+    public void testOrderedCollection() {
         java.util.List<String> a = Arrays.asList("one", "two", "three", "four", "five");
         java.util.List<String> b = new LinkedList<>(a);
 
@@ -167,8 +159,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testUnorderedCollection()
-    {
+    public void testUnorderedCollection() {
         Set<String> a = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five"));
         Set<String> b = new HashSet<>(Arrays.asList("three", "five", "one", "four", "two"));
         assertTrue(DeepEquals.deepEquals(a, b));
@@ -204,8 +195,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testEquivalentMaps()
-    {
+    public void testEquivalentMaps() {
         Map map1 = new LinkedHashMap();
         fillMap(map1);
         Map map2 = new HashMap();
@@ -223,8 +213,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testUnorderedMapsWithKeyHashCodeCollisions()
-    {
+    public void testUnorderedMapsWithKeyHashCodeCollisions() {
         Map<DumbHash, String> map1 = new LinkedHashMap<>();
         map1.put(new DumbHash("alpha"), "alpha");
         map1.put(new DumbHash("bravo"), "bravo");
@@ -245,8 +234,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testUnorderedMapsWithValueHashCodeCollisions()
-    {
+    public void testUnorderedMapsWithValueHashCodeCollisions() {
         Map<String, DumbHash> map1 = new LinkedHashMap<>();
         map1.put("alpha", new DumbHash("alpha"));
         map1.put("bravo", new DumbHash("bravo"));
@@ -267,8 +255,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testUnorderedMapsWithKeyValueHashCodeCollisions()
-    {
+    public void testUnorderedMapsWithKeyValueHashCodeCollisions() {
         Map<DumbHash, DumbHash> map1 = new LinkedHashMap<>();
         map1.put(new DumbHash("alpha"), new DumbHash("alpha"));
         map1.put(new DumbHash("bravo"), new DumbHash("bravo"));
@@ -289,8 +276,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testInequivalentMaps()
-    {
+    public void testInequivalentMaps() {
         Map map1 = new TreeMap();
         fillMap(map1);
         Map map2 = new HashMap();
@@ -326,8 +312,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testEquivalentCollections()
-    {
+    public void testEquivalentCollections() {
         // ordered Collection
         Collection col1 = new ArrayList();
         fillCollection(col1);
@@ -354,8 +339,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testInequivalentCollections()
-    {
+    public void testInequivalentCollections() {
         Collection col1 = new TreeSet();
         fillCollection(col1);
         Collection col2 = new HashSet();
@@ -374,10 +358,9 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testArray()
-    {
-        Object[] a1 = new Object[] {"alpha", "bravo", "charlie", "delta"};
-        Object[] a2 = new Object[] {"alpha", "bravo", "charlie", "delta"};
+    public void testArray() {
+        Object[] a1 = new Object[]{"alpha", "bravo", "charlie", "delta"};
+        Object[] a2 = new Object[]{"alpha", "bravo", "charlie", "delta"};
 
         assertTrue(DeepEquals.deepEquals(a1, a2));
         assertEquals(DeepEquals.deepHashCode(a1), DeepEquals.deepHashCode(a2));
@@ -387,8 +370,7 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testHasCustomMethod()
-    {
+    public void testHasCustomMethod() {
         assertFalse(DeepEquals.hasCustomEquals(EmptyClass.class));
         assertFalse(DeepEquals.hasCustomHashCode(Class1.class));
 
@@ -397,43 +379,36 @@ public class DeepEqualsTest {
     }
 
     @Test
-    public void testSymmetry()
-    {
+    public void testSymmetry() {
         boolean one = DeepEquals.deepEquals(new ArrayList<String>(), new EmptyClass());
         boolean two = DeepEquals.deepEquals(new EmptyClass(), new ArrayList<String>());
         assert one == two;
     }
 
-    static class DumbHash
-    {
+    static class DumbHash {
         String s;
 
-        DumbHash(String str)
-        {
+        DumbHash(String str) {
             s = str;
         }
 
-        public boolean equals(Object o)
-        {
+        public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             DumbHash dumbHash = (DumbHash) o;
             return s != null ? s.equals(dumbHash.s) : dumbHash.s == null;
         }
 
-        public int hashCode()
-        {
+        public int hashCode() {
             return 1;   // dumb, but valid
         }
     }
 
-    static class EmptyClass
-    {
+    static class EmptyClass {
 
     }
 
-    static class EmptyClassWithEquals
-    {
+    static class EmptyClassWithEquals {
         public boolean equals(Object obj) {
             return obj instanceof EmptyClassWithEquals;
         }
@@ -443,16 +418,15 @@ public class DeepEqualsTest {
         }
     }
 
-    static class Class1
-    {
+    static class Class1 {
         private boolean b;
         private double d;
         int i;
 
-        public Class1() { }
+        public Class1() {
+        }
 
-        public Class1(boolean b, double d, int i)
-        {
+        public Class1(boolean b, double d, int i) {
             super();
             this.b = b;
             this.d = d;
@@ -461,15 +435,13 @@ public class DeepEqualsTest {
 
     }
 
-    static class Class2
-    {
+    static class Class2 {
         private Float f;
         String s;
         short ss;
         Class1 c;
 
-        public Class2(float f, String s, short ss, Class1 c)
-        {
+        public Class2(float f, String s, short ss, Class1 c) {
             super();
             this.f = f;
             this.s = s;
@@ -477,24 +449,21 @@ public class DeepEqualsTest {
             this.c = c;
         }
 
-        public Class2() { }
+        public Class2() {
+        }
     }
 
-    private static class Person
-    {
+    private static class Person {
         private String name;
         private int age;
 
-        Person(String name, int age)
-        {
+        Person(String name, int age) {
             this.name = name;
             this.age = age;
         }
 
-        public boolean equals(Object obj)
-        {
-            if (!(obj instanceof Person))
-            {
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Person)) {
                 return false;
             }
 
@@ -502,29 +471,24 @@ public class DeepEqualsTest {
             return name.equals(other.name);
         }
 
-        public int hashCode()
-        {
+        public int hashCode() {
             return name == null ? 0 : name.hashCode();
         }
     }
 
-    private static class AtomicWrapper
-    {
+    private static class AtomicWrapper {
         private AtomicLong n;
 
-        AtomicWrapper(long n)
-        {
+        AtomicWrapper(long n) {
             this.n = new AtomicLong(n);
         }
 
-        long getValue()
-        {
+        long getValue() {
             return n.longValue();
         }
     }
 
-    private void fillMap(Map map)
-    {
+    private void fillMap(Map map) {
         map.put("zulu", 26);
         map.put("alpha", 1);
         map.put("bravo", 2);
@@ -553,8 +517,7 @@ public class DeepEqualsTest {
         map.put("yankee", 25);
     }
 
-    private void fillCollection(Collection col)
-    {
+    private void fillCollection(Collection col) {
         col.add("zulu");
         col.add("alpha");
         col.add("bravo");
