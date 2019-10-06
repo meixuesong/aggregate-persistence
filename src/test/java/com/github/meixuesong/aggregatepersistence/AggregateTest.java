@@ -64,10 +64,10 @@ public class AggregateTest {
         entity.setLength(10.0123456789F);
         Aggregate<SampleEntity> aggregate = AggregateFactory.createAggregate(entity);
 
-        entity.setLength(10.0123456F);
+        entity.setLength(10.01234F);
         assertThat(aggregate.isChanged(), is(false));
 
-        entity.setLength(10.01234F);
+        entity.setLength(10.0123F);
         assertThat(aggregate.isChanged(), is(true));
     }
 
@@ -83,11 +83,14 @@ public class AggregateTest {
 
     @Test
     public void should_be_changed_when_bigdecimal_field_changed() {
+        BigDecimal moneyWith10Zero = new BigDecimal("0.00000000001");
+        BigDecimal moneyWith11Zero = new BigDecimal("0.000000000001");
+
         SampleEntity entity = new SampleEntity();
-        entity.setMoney(new BigDecimal("0.00000000001"));
+        entity.setMoney(moneyWith10Zero);
         Aggregate<SampleEntity> aggregate = AggregateFactory.createAggregate(entity);
 
-        entity.setMoney(new BigDecimal("0.000000000001"));
+        entity.setMoney(moneyWith11Zero);
         assertThat(aggregate.isChanged(), is(true));
     }
 
@@ -154,6 +157,7 @@ public class AggregateTest {
         assertThat(getChangedChildren(aggregate).size(), is(0));
         assertThat(getRemovedChildren(aggregate).size(), is(1));
     }
+
 
 
     private Collection<SampleEntity> getNewChildren(Aggregate<SampleEntity> aggregate) {
