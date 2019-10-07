@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -36,6 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ReflectionUtils
 {
     private static final Map<Class, Collection<Field>> _reflectedFields = new ConcurrentHashMap<>();
+    private static final Map<Class, Boolean> _customEquals = new ConcurrentHashMap<>();
+    private static final Map<Class, Boolean> _customHash = new ConcurrentHashMap<>();
 
     private ReflectionUtils()
     {
@@ -260,5 +263,134 @@ public final class ReflectionUtils
         }
         dis.readShort(); // skip access flags
         return strings[classes[(dis.readShort() & 0xffff) - 1] - 1].replace('/', '.');
+    }
+
+    /**
+     * Determine if the passed in class has a non-Object.equals() method.  This
+     * method caches its results in static ConcurrentHashMap to benefit
+     * execution performance.
+     *
+     * @param c Class to check.
+     * @return true, if the passed in Class has a .equals() method somewhere between
+     * itself and just below Object in it's inheritance.
+     */
+    public static boolean hasCustomEquals(Class<?> c) {
+        Class origClass = c;
+        if (_customEquals.containsKey(c)) {
+            return _customEquals.get(c);
+        }
+
+        while (!Object.class.equals(c)) {
+            try {
+                c.getDeclaredMethod("equals", Object.class);
+                _customEquals.put(origClass, true);
+                return true;
+            } catch (Exception ignored) {
+            }
+            c = c.getSuperclass();
+        }
+        _customEquals.put(origClass, false);
+        return false;
+    }
+
+    /**
+     * Get a deterministic hashCode (int) value for an Object, regardless of
+     * when it was created or where it was loaded into memory.  The problem
+     * with java.lang.Object.hashCode() is that it essentially relies on
+     * memory location of an object (what identity it was assigned), whereas
+     * this method will produce the same hashCode for any object graph, regardless
+     * of how many times it is created.<br><br>
+     * <p>
+     * This method will handle cycles correctly (A-&gt;B-&gt;C-&gt;A).  In this case,
+     * Starting with object A, B, or C would yield the same hashCode.  If an
+     * object encountered (root, suboject, etc.) has a hashCode() method on it
+     * (that is not Object.hashCode()), that hashCode() method will be called
+     * and it will stop traversal on that branch.
+     *
+     * @param obj Object who hashCode is desired.
+     * @return the 'deep' hashCode value for the passed in object.
+     */
+    public static int deepHashCode(Object obj) {
+        Set<Object> visited = new HashSet<>();
+        LinkedList<Object> stack = new LinkedList<>();
+        stack.addFirst(obj);
+        int hash = 0;
+
+        while (!stack.isEmpty()) {
+            obj = stack.removeFirst();
+            if (obj == null || visited.contains(obj)) {
+                continue;
+            }
+
+            visited.add(obj);
+
+            if (obj.getClass().isArray()) {
+                int len = Array.getLength(obj);
+                for (int i = 0; i < len; i++) {
+                    stack.addFirst(Array.get(obj, i));
+                }
+                continue;
+            }
+
+            if (obj instanceof Collection) {
+                stack.addAll(0, (Collection) obj);
+                continue;
+            }
+
+            if (obj instanceof Map) {
+                stack.addAll(0, ((Map) obj).keySet());
+                stack.addAll(0, ((Map) obj).values());
+                continue;
+            }
+
+            if (obj instanceof Double || obj instanceof Float) {
+                // just take the integral value for hashcode
+                // equality tests things more comprehensively
+                stack.add(Math.round(((Number) obj).doubleValue()));
+                continue;
+            }
+
+            if (hasCustomHashCode(obj.getClass())) {   // A real hashCode() method exists, call it.
+                hash += obj.hashCode();
+                continue;
+            }
+
+            Collection<Field> fields = getDeepDeclaredFields(obj.getClass());
+            for (Field field : fields) {
+                try {
+                    stack.addFirst(field.get(obj));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return hash;
+    }
+
+    /**
+     * Determine if the passed in class has a non-Object.hashCode() method.  This
+     * method caches its results in static ConcurrentHashMap to benefit
+     * execution performance.
+     *
+     * @param c Class to check.
+     * @return true, if the passed in Class has a .hashCode() method somewhere between
+     * itself and just below Object in it's inheritance.
+     */
+    public static boolean hasCustomHashCode(Class<?> c) {
+        Class origClass = c;
+        if (_customHash.containsKey(c)) {
+            return _customHash.get(c);
+        }
+
+        while (!Object.class.equals(c)) {
+            try {
+                c.getDeclaredMethod("hashCode");
+                _customHash.put(origClass, true);
+                return true;
+            } catch (Exception ignored) {
+            }
+            c = c.getSuperclass();
+        }
+        _customHash.put(origClass, false);
+        return false;
     }
 }

@@ -11,6 +11,6 @@ public class JavaUtilPropertyComparator implements PropertyComparator {
         Map<String, Object> options = new HashMap<>();
         options.put(DeepEquals.IGNORE_CUSTOM_EQUALS, new HashSet());
 
-        return DeepEquals.deepEquals(a, b, options);
+        return new DeepEquals().isDeepEquals(a, b, options);
     }
 }
