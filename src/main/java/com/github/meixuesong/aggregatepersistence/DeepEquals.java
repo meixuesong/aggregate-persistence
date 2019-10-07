@@ -5,8 +5,6 @@ import java.lang.reflect.Field;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,47 +22,6 @@ public class DeepEquals {
     public static final String IGNORE_CUSTOM_EQUALS = "ignoreCustomEquals";
     private static final Map<Class, Boolean> _customEquals = new ConcurrentHashMap<>();
     private static final Map<Class, Boolean> _customHash = new ConcurrentHashMap<>();
-    private static final double doubleEplison = 1e-15;
-    private static final double floatEplison = 1e-6;
-    private static final Set<Class> prims = new HashSet<>();
-
-    static {
-        prims.add(Byte.class);
-        prims.add(Integer.class);
-        prims.add(Long.class);
-        prims.add(Double.class);
-        prims.add(Character.class);
-        prims.add(Float.class);
-        prims.add(Boolean.class);
-        prims.add(Short.class);
-    }
-
-    private final static class DualKey {
-        private final Object _key1;
-        private final Object _key2;
-
-        private DualKey(Object k1, Object k2) {
-            _key1 = k1;
-            _key2 = k2;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (!(other instanceof DualKey)) {
-                return false;
-            }
-
-            DualKey that = (DualKey) other;
-            return _key1 == that._key1 && _key2 == that._key2;
-        }
-
-        @Override
-        public int hashCode() {
-            int h1 = _key1 != null ? _key1.hashCode() : 0;
-            int h2 = _key2 != null ? _key2.hashCode() : 0;
-            return h1 + h2;
-        }
-    }
 
     /**
      * Compare two objects with a 'deep' comparison.  This will traverse the
@@ -128,81 +85,40 @@ public class DeepEquals {
      * traversal.
      */
     public static boolean deepEquals(Object a, Object b, Map<?, ?> options) {
-        Set<DualKey> visited = new HashSet<>();
-        Deque<DualKey> stack = new LinkedList<>();
+
+        RecursiveObject recursiveObject = new RecursiveObject();
         Set<String> ignoreCustomEquals = (Set<String>) options.get(IGNORE_CUSTOM_EQUALS);
-        stack.addFirst(new DualKey(a, b));
+        recursiveObject.push(new DualObject(a, b));
 
-        while (!stack.isEmpty()) {
-            DualKey dualKey = stack.removeFirst();
-            visited.add(dualKey);
+        while (!recursiveObject.isEmpty()) {
+            DualObject dualObject = recursiveObject.pop();
 
-            if (dualKey._key1 == dualKey._key2) {   // Same instance is always equal to itself.
+            if (dualObject.a == dualObject.b) {
                 continue;
             }
 
-            if (dualKey._key1 == null || dualKey._key2 == null) {   // If either one is null, not equal (both can't be null, due to above comparison).
+            // If either one is null, not equal (both can't be null, due to above comparison).
+            if (dualObject.a == null || dualObject.b == null) {
                 return false;
             }
 
-            if (dualKey._key1 instanceof Double && compareFloatingPointNumbers(dualKey._key1, dualKey._key2, doubleEplison)) {
+            if (dualObject.isPrimitiveEquals()) {
+                if (! dualObject.primitiveEquals()) {
+                    return false;
+                }
                 continue;
             }
 
-            if (dualKey._key1 instanceof Float && compareFloatingPointNumbers(dualKey._key1, dualKey._key2, floatEplison)) {
-                continue;
-            }
-
-            Class key1Class = dualKey._key1.getClass();
-
-            if (key1Class.isPrimitive() || prims.contains(key1Class) || dualKey._key1 instanceof String || dualKey._key1 instanceof Date || dualKey._key1 instanceof Class) {
-                if (!dualKey._key1.equals(dualKey._key2)) {
-                    return false;
-                }
-                continue;   // Nothing further to push on the stack
-            }
-
-            if (dualKey._key1 instanceof Collection) {   // If Collections, they both must be Collection
-                if (!(dualKey._key2 instanceof Collection)) {
-                    return false;
-                }
-            } else if (dualKey._key2 instanceof Collection) {   // They both must be Collection
-                return false;
-            }
-
-            if (dualKey._key1 instanceof SortedSet) {
-                if (!(dualKey._key2 instanceof SortedSet)) {
-                    return false;
-                }
-            } else if (dualKey._key2 instanceof SortedSet) {
-                return false;
-            }
-
-            if (dualKey._key1 instanceof SortedMap) {
-                if (!(dualKey._key2 instanceof SortedMap)) {
-                    return false;
-                }
-            } else if (dualKey._key2 instanceof SortedMap) {
-                return false;
-            }
-
-            if (dualKey._key1 instanceof Map) {
-                if (!(dualKey._key2 instanceof Map)) {
-                    return false;
-                }
-            } else if (dualKey._key2 instanceof Map) {
-                return false;
-            }
-
-            if (!isContainerType(dualKey._key1) && !isContainerType(dualKey._key2) && !key1Class.equals(dualKey._key2.getClass())) {   // Must be same class
+            if (!dualObject.isTypeComparable()) {
                 return false;
             }
 
             // Handle all [] types.  In order to be equal, the arrays must be the same
             // length, be of the same type, be in the same order, and all elements within
             // the array must be deeply equivalent.
+            Class key1Class = dualObject.a.getClass();
             if (key1Class.isArray()) {
-                if (!compareArrays(dualKey._key1, dualKey._key2, stack, visited)) {
+                if (!compareArrays(dualObject.a, dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -210,8 +126,8 @@ public class DeepEquals {
 
             // Special handle SortedSets because they are fast to compare because their
             // elements must be in the same order to be equivalent Sets.
-            if (dualKey._key1 instanceof SortedSet) {
-                if (!compareOrderedCollection((Collection) dualKey._key1, (Collection) dualKey._key2, stack, visited)) {
+            if (dualObject.a instanceof SortedSet) {
+                if (!compareOrderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -219,8 +135,8 @@ public class DeepEquals {
 
             // Handled unordered Sets.  This is a slightly more expensive comparison because order cannot
             // be assumed, a temporary Map must be created, however the comparison still runs in O(N) time.
-            if (dualKey._key1 instanceof Set) {
-                if (!compareUnorderedCollection((Collection) dualKey._key1, (Collection) dualKey._key2, stack, visited)) {
+            if (dualObject.a instanceof Set) {
+                if (!compareUnorderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -228,8 +144,8 @@ public class DeepEquals {
 
             // Check any Collection that is not a Set.  In these cases, element order
             // matters, therefore this comparison is faster than using unordered comparison.
-            if (dualKey._key1 instanceof Collection) {
-                if (!compareOrderedCollection((Collection) dualKey._key1, (Collection) dualKey._key2, stack, visited)) {
+            if (dualObject.a instanceof Collection) {
+                if (!compareOrderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -237,8 +153,8 @@ public class DeepEquals {
 
             // Compare two SortedMaps.  This takes advantage of the fact that these
             // Maps can be compared in O(N) time due to their ordering.
-            if (dualKey._key1 instanceof SortedMap) {
-                if (!compareSortedMap((SortedMap) dualKey._key1, (SortedMap) dualKey._key2, stack, visited)) {
+            if (dualObject.a instanceof SortedMap) {
+                if (!compareSortedMap((SortedMap) dualObject.a, (SortedMap) dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -247,8 +163,8 @@ public class DeepEquals {
             // Compare two Unordered Maps. This is a slightly more expensive comparison because
             // order cannot be assumed, therefore a temporary Map must be created, however the
             // comparison still runs in O(N) time.
-            if (dualKey._key1 instanceof Map) {
-                if (!compareUnorderedMap((Map) dualKey._key1, (Map) dualKey._key2, stack, visited)) {
+            if (dualObject.a instanceof Map) {
+                if (!compareUnorderedMap((Map) dualObject.a, (Map) dualObject.b, recursiveObject)) {
                     return false;
                 }
                 continue;
@@ -260,7 +176,7 @@ public class DeepEquals {
             // compare using the custom equals.
             if (hasCustomEquals(key1Class)) {
                 if (ignoreCustomEquals == null || (ignoreCustomEquals.size() > 0 && !ignoreCustomEquals.contains(key1Class))) {
-                    if (!dualKey._key1.equals(dualKey._key2)) {
+                    if (!dualObject.a.equals(dualObject.b)) {
                         return false;
                     }
                     continue;
@@ -271,20 +187,14 @@ public class DeepEquals {
 
             for (Field field : fields) {
                 try {
-                    DualKey dk = new DualKey(field.get(dualKey._key1), field.get(dualKey._key2));
-                    if (!visited.contains(dk)) {
-                        stack.addFirst(dk);
-                    }
+                    recursiveObject.push(new DualObject(field.get(dualObject.a), field.get(dualObject.b)));
                 } catch (Exception ignored) {
+                    throw new RuntimeException(ignored);
                 }
             }
         }
 
         return true;
-    }
-
-    public static boolean isContainerType(Object o) {
-        return o instanceof Collection || o instanceof Map;
     }
 
     /**
@@ -293,24 +203,20 @@ public class DeepEquals {
      *
      * @param array1  [] type (Object[], String[], etc.)
      * @param array2  [] type (Object[], String[], etc.)
-     * @param stack   add items to compare to the Stack (Stack versus recursion)
-     * @param visited Set of objects already compared (prevents cycles)
+     * @param recursiveObject
      * @return true if the two arrays are the same length and contain deeply equivalent items.
      */
-    private static boolean compareArrays(Object array1, Object array2, Deque stack, Set visited) {
-        // Same instance check already performed...
-
-        int len = Array.getLength(array1);
-        if (len != Array.getLength(array2)) {
+    private static boolean compareArrays(Object array1, Object array2, RecursiveObject recursiveObject) {
+        if (Array.getLength(array1) != Array.getLength(array2)) {
             return false;
         }
 
-        for (int i = 0; i < len; i++) {
-            DualKey dk = new DualKey(Array.get(array1, i), Array.get(array2, i));
-            if (!visited.contains(dk)) {   // push contents for further comparison
-                stack.addFirst(dk);
-            }
+        int length = Array.getLength(array1);
+        for (int i = 0; i < length; i++) {
+            DualObject dk = new DualObject(Array.get(array1, i), Array.get(array2, i));
+            recursiveObject.push(dk);
         }
+
         return true;
     }
 
@@ -319,14 +225,8 @@ public class DeepEquals {
      *
      * @param col1    First collection of items to compare
      * @param col2    Second collection of items to compare
-     * @param stack   add items to compare to the Stack (Stack versus recursion)
-     * @param visited Set of objects already compared (prevents cycles)
-     *                value of 'true' indicates that the Collections may be equal, and the sets
-     *                items will be added to the Stack for further comparison.
      */
-    private static boolean compareOrderedCollection(Collection col1, Collection col2, Deque stack, Set visited) {
-        // Same instance check already performed...
-
+    private static boolean compareOrderedCollection(Collection col1, Collection col2, RecursiveObject controller) {
         if (col1.size() != col2.size()) {
             return false;
         }
@@ -335,11 +235,10 @@ public class DeepEquals {
         Iterator i2 = col2.iterator();
 
         while (i1.hasNext()) {
-            DualKey dk = new DualKey(i1.next(), i2.next());
-            if (!visited.contains(dk)) {   // push contents for further comparison
-                stack.addFirst(dk);
-            }
+            DualObject dk = new DualObject(i1.next(), i2.next());
+            controller.push(dk);
         }
+
         return true;
     }
 
@@ -353,16 +252,12 @@ public class DeepEquals {
      *
      * @param col1    First collection of items to compare
      * @param col2    Second collection of items to compare
-     * @param stack   add items to compare to the Stack (Stack versus recursion)
-     * @param visited Set containing items that have already been compared,
-     *                so as to prevent cycles.
+     * @param recursiveObject
      * @return boolean false if the Collections are for certain not equals. A
      * value of 'true' indicates that the Collections may be equal, and the sets
      * items will be added to the Stack for further comparison.
      */
-    private static boolean compareUnorderedCollection(Collection col1, Collection col2, Deque stack, Set visited) {
-        // Same instance check already performed...
-
+    private static boolean compareUnorderedCollection(Collection col1, Collection col2, RecursiveObject recursiveObject) {
         if (col1.size() != col2.size()) {
             return false;
         }
@@ -385,10 +280,8 @@ public class DeepEquals {
             }
 
             if (other.size() == 1) {   // no hash collision, items must be equivalent or deepEquals is false
-                DualKey dk = new DualKey(o, other.iterator().next());
-                if (!visited.contains(dk)) {   // Place items on 'stack' for future equality comparison.
-                    stack.addFirst(dk);
-                }
+                DualObject dk = new DualObject(o, other.iterator().next());
+                recursiveObject.push(dk);
             } else {   // hash collision: try all collided items against the current item (if 1 equals, we are good - remove it
                 // from collision list, making further comparisons faster)
                 if (!isContained(o, other)) {
@@ -405,12 +298,11 @@ public class DeepEquals {
      *
      * @param map1    SortedMap one
      * @param map2    SortedMap two
-     * @param stack   add items to compare to the Stack (Stack versus recursion)
-     * @param visited Set containing items that have already been compared, to prevent cycles.
+     * @param recursiveObject
      * @return false if the Maps are for certain not equals.  'true' indicates that 'on the surface' the maps
      * are equal, however, it will place the contents of the Maps on the stack for further comparisons.
      */
-    private static boolean compareSortedMap(SortedMap map1, SortedMap map2, Deque stack, Set visited) {
+    private static boolean compareSortedMap(SortedMap map1, SortedMap map2, RecursiveObject recursiveObject) {
         // Same instance check already performed...
 
         if (map1.size() != map2.size()) {
@@ -425,15 +317,8 @@ public class DeepEquals {
             Map.Entry entry2 = (Map.Entry) i2.next();
 
             // Must split the Key and Value so that Map.Entry's equals() method is not used.
-            DualKey dk = new DualKey(entry1.getKey(), entry2.getKey());
-            if (!visited.contains(dk)) {   // Push Keys for further comparison
-                stack.addFirst(dk);
-            }
-
-            dk = new DualKey(entry1.getValue(), entry2.getValue());
-            if (!visited.contains(dk)) {   // Push values for further comparison
-                stack.addFirst(dk);
-            }
+            recursiveObject.push(new DualObject(entry1.getKey(), entry2.getKey()));
+            recursiveObject.push(new DualObject(entry1.getValue(), entry2.getValue()));
         }
         return true;
     }
@@ -444,12 +329,11 @@ public class DeepEquals {
      *
      * @param map1    Map one
      * @param map2    Map two
-     * @param stack   add items to compare to the Stack (Stack versus recursion)
-     * @param visited Set containing items that have already been compared, to prevent cycles.
+     * @param recursiveObject
      * @return false if the Maps are for certain not equals.  'true' indicates that 'on the surface' the maps
      * are equal, however, it will place the contents of the Maps on the stack for further comparisons.
      */
-    private static boolean compareUnorderedMap(Map map1, Map map2, Deque stack, Set visited) {
+    private static boolean compareUnorderedMap(Map map1, Map map2, RecursiveObject recursiveObject) {
         // Same instance check already performed...
 
         if (map1.size() != map2.size()) {
@@ -479,15 +363,9 @@ public class DeepEquals {
 
             if (other.size() == 1) {
                 Map.Entry entry2 = other.iterator().next();
-                DualKey dk = new DualKey(entry.getKey(), entry2.getKey());
-                if (!visited.contains(dk)) {   // Push keys for further comparison
-                    stack.addFirst(dk);
-                }
 
-                dk = new DualKey(entry.getValue(), entry2.getValue());
-                if (!visited.contains(dk)) {   // Push values for further comparison
-                    stack.addFirst(dk);
-                }
+                recursiveObject.push(new DualObject(entry.getKey(), entry2.getKey()));
+                recursiveObject.push(new DualObject(entry.getValue(), entry2.getValue()));
             } else {   // hash collision: try all collided items against the current item (if 1 equals, we are good - remove it
                 // from collision list, making further comparisons faster)
                 if (!isContained(new AbstractMap.SimpleEntry(entry.getKey(), entry.getValue()), other)) {
@@ -513,40 +391,6 @@ public class DeepEquals {
             }
         }
         return false;
-    }
-
-    /**
-     * Compare if two floating point numbers are within a given range
-     */
-    private static boolean compareFloatingPointNumbers(Object a, Object b, double epsilon) {
-        double a1 = a instanceof Double ? (Double) a : (Float) a;
-        double b1 = b instanceof Double ? (Double) b : (Float) b;
-        return nearlyEqual(a1, b1, epsilon);
-    }
-
-    /**
-     * Correctly handles floating point comparisions. <br>
-     * source: http://floating-point-gui.de/errors/comparison/
-     *
-     * @param a       first number
-     * @param b       second number
-     * @param epsilon double tolerance value
-     * @return true if a and b are close enough
-     */
-    private static boolean nearlyEqual(double a, double b, double epsilon) {
-        final double absA = Math.abs(a);
-        final double absB = Math.abs(b);
-        final double diff = Math.abs(a - b);
-
-        if (a == b) { // shortcut, handles infinities
-            return true;
-        } else if (a == 0 || b == 0 || diff < Double.MIN_NORMAL) {
-            // a or b is zero or both are extremely close to it
-            // relative error is less meaningful here
-            return diff < (epsilon * Double.MIN_NORMAL);
-        } else { // use relative error
-            return diff / (absA + absB) < epsilon;
-        }
     }
 
     /**
