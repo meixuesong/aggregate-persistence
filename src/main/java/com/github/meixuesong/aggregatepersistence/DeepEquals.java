@@ -9,10 +9,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DeepEquals {
@@ -85,9 +84,9 @@ public class DeepEquals {
      * traversal.
      */
     public static boolean deepEquals(Object a, Object b, Map<?, ?> options) {
-
         RecursiveObject recursiveObject = new RecursiveObject();
         Set<String> ignoreCustomEquals = (Set<String>) options.get(IGNORE_CUSTOM_EQUALS);
+
         recursiveObject.push(new DualObject(a, b));
 
         while (!recursiveObject.isEmpty()) {
@@ -97,83 +96,27 @@ public class DeepEquals {
                 continue;
             }
 
-            // If either one is null, not equal (both can't be null, due to above comparison).
-            if (dualObject.a == null || dualObject.b == null) {
+            if (! dualObject.validateType()) {
                 return false;
             }
 
-            if (dualObject.isPrimitiveEquals()) {
-                if (! dualObject.primitiveEquals()) {
+            if (dualObject.shouldUseEqualMethod()) {
+                if (! dualObject.compareByEquals()) {
                     return false;
                 }
+
                 continue;
             }
 
-            if (!dualObject.isTypeComparable()) {
-                return false;
+            if (dualObject.isContainer()) {
+                if (!compareContainer(dualObject, recursiveObject)) {
+                    return false;
+                }
+
+                continue;
             }
 
-            // Handle all [] types.  In order to be equal, the arrays must be the same
-            // length, be of the same type, be in the same order, and all elements within
-            // the array must be deeply equivalent.
             Class key1Class = dualObject.a.getClass();
-            if (key1Class.isArray()) {
-                if (!compareArrays(dualObject.a, dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Special handle SortedSets because they are fast to compare because their
-            // elements must be in the same order to be equivalent Sets.
-            if (dualObject.a instanceof SortedSet) {
-                if (!compareOrderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Handled unordered Sets.  This is a slightly more expensive comparison because order cannot
-            // be assumed, a temporary Map must be created, however the comparison still runs in O(N) time.
-            if (dualObject.a instanceof Set) {
-                if (!compareUnorderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Check any Collection that is not a Set.  In these cases, element order
-            // matters, therefore this comparison is faster than using unordered comparison.
-            if (dualObject.a instanceof Collection) {
-                if (!compareOrderedCollection((Collection) dualObject.a, (Collection) dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Compare two SortedMaps.  This takes advantage of the fact that these
-            // Maps can be compared in O(N) time due to their ordering.
-            if (dualObject.a instanceof SortedMap) {
-                if (!compareSortedMap((SortedMap) dualObject.a, (SortedMap) dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Compare two Unordered Maps. This is a slightly more expensive comparison because
-            // order cannot be assumed, therefore a temporary Map must be created, however the
-            // comparison still runs in O(N) time.
-            if (dualObject.a instanceof Map) {
-                if (!compareUnorderedMap((Map) dualObject.a, (Map) dualObject.b, recursiveObject)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // If there is a custom equals ... AND
-            // the caller has not specified any classes to skip ... OR
-            // the caller has specified come classes to ignore and this one is not in the list ... THEN
-            // compare using the custom equals.
             if (hasCustomEquals(key1Class)) {
                 if (ignoreCustomEquals == null || (ignoreCustomEquals.size() > 0 && !ignoreCustomEquals.contains(key1Class))) {
                     if (!dualObject.a.equals(dualObject.b)) {
@@ -183,15 +126,39 @@ public class DeepEquals {
                 }
             }
 
-            Collection<Field> fields = ReflectionUtils.getDeepDeclaredFields(key1Class);
+            addFieldsToCompare(dualObject, recursiveObject);
+        }
 
-            for (Field field : fields) {
-                try {
-                    recursiveObject.push(new DualObject(field.get(dualObject.a), field.get(dualObject.b)));
-                } catch (Exception ignored) {
-                    throw new RuntimeException(ignored);
-                }
+        return true;
+    }
+
+    private static void addFieldsToCompare(DualObject dualObject, RecursiveObject recursiveObject) {
+        Collection<Field> fields = ReflectionUtils.getDeepDeclaredFields(dualObject.a.getClass());
+
+        for (Field field : fields) {
+            try {
+                recursiveObject.push(new DualObject(field.get(dualObject.a), field.get(dualObject.b)));
+            } catch (Exception ignored) {
+                throw new RuntimeException(ignored);
             }
+        }
+    }
+
+    private static boolean compareContainer(DualObject dualObject, RecursiveObject recursiveObject) {
+        if (! dualObject.isSameSizeOfContainer()) {
+            return false;
+        }
+
+        if (dualObject.isArrayContainer()) {
+            return compareUnorderedCollection(array2List(dualObject.a), array2List(dualObject.b), recursiveObject);
+        }
+
+        if (dualObject.isCollectionContainer()) {
+            return compareUnorderedCollection((Collection)dualObject.a, (Collection)dualObject.b, recursiveObject);
+        }
+
+        if (dualObject.isMapContainer()) {
+            return compareUnorderedMap((Map) dualObject.a, (Map) dualObject.b, recursiveObject);
         }
 
         return true;
@@ -220,26 +187,15 @@ public class DeepEquals {
         return true;
     }
 
-    /**
-     * Deeply compare two Collections that must be same length and in same order.
-     *
-     * @param col1    First collection of items to compare
-     * @param col2    Second collection of items to compare
-     */
-    private static boolean compareOrderedCollection(Collection col1, Collection col2, RecursiveObject controller) {
-        if (col1.size() != col2.size()) {
-            return false;
+    private static List array2List(Object array) {
+        List results = new ArrayList();
+
+        int length = Array.getLength(array);
+        for (int i = 0; i < length; i++) {
+            results.add(Array.get(array, i));
         }
 
-        Iterator i1 = col1.iterator();
-        Iterator i2 = col2.iterator();
-
-        while (i1.hasNext()) {
-            DualObject dk = new DualObject(i1.next(), i2.next());
-            controller.push(dk);
-        }
-
-        return true;
+        return results;
     }
 
     /**
@@ -288,37 +244,6 @@ public class DeepEquals {
                     return false;
                 }
             }
-        }
-        return true;
-    }
-
-    /**
-     * Deeply compare two SortedMap instances.  This method walks the Maps in order,
-     * taking advantage of the fact that the Maps are SortedMaps.
-     *
-     * @param map1    SortedMap one
-     * @param map2    SortedMap two
-     * @param recursiveObject
-     * @return false if the Maps are for certain not equals.  'true' indicates that 'on the surface' the maps
-     * are equal, however, it will place the contents of the Maps on the stack for further comparisons.
-     */
-    private static boolean compareSortedMap(SortedMap map1, SortedMap map2, RecursiveObject recursiveObject) {
-        // Same instance check already performed...
-
-        if (map1.size() != map2.size()) {
-            return false;
-        }
-
-        Iterator i1 = map1.entrySet().iterator();
-        Iterator i2 = map2.entrySet().iterator();
-
-        while (i1.hasNext()) {
-            Map.Entry entry1 = (Map.Entry) i1.next();
-            Map.Entry entry2 = (Map.Entry) i2.next();
-
-            // Must split the Key and Value so that Map.Entry's equals() method is not used.
-            recursiveObject.push(new DualObject(entry1.getKey(), entry2.getKey()));
-            recursiveObject.push(new DualObject(entry1.getValue(), entry2.getValue()));
         }
         return true;
     }

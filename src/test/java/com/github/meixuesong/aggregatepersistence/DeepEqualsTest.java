@@ -146,11 +146,12 @@ public class DeepEqualsTest {
         assertTrue(DeepEquals.deepEquals(a, b));
 
         java.util.List<Integer> c = Arrays.asList(1, 2, 3, 4, 5);
-
+        java.util.List<Integer> e = Arrays.asList(1, 2, 3, 5, 4);
         assertFalse(DeepEquals.deepEquals(a, c));
+        //ignore order
+        assertTrue(DeepEquals.deepEquals(e, c));
 
         java.util.List<Integer> d = Arrays.asList(4, 6);
-
         assertFalse(DeepEquals.deepEquals(c, d));
 
         java.util.List<Class1> x1 = Arrays.asList(new Class1(true, log(pow(E, 2)), 6), new Class1(true, tan(PI / 4), 1));
@@ -361,9 +362,14 @@ public class DeepEqualsTest {
     public void testArray() {
         Object[] a1 = new Object[]{"alpha", "bravo", "charlie", "delta"};
         Object[] a2 = new Object[]{"alpha", "bravo", "charlie", "delta"};
+        Object[] a3 = new Object[]{"alpha", "charlie", "bravo", "delta"};
 
         assertTrue(DeepEquals.deepEquals(a1, a2));
         assertEquals(DeepEquals.deepHashCode(a1), DeepEquals.deepHashCode(a2));
+
+        //Ignore order
+        assertTrue(DeepEquals.deepEquals(a1, a3));
+
         a2[3] = "echo";
         assertFalse(DeepEquals.deepEquals(a1, a2));
         assertNotEquals(DeepEquals.deepHashCode(a1), DeepEquals.deepHashCode(a2));
