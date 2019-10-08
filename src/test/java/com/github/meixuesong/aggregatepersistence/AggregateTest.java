@@ -83,8 +83,8 @@ public class AggregateTest {
 
     @Test
     public void should_be_changed_when_bigdecimal_field_changed() {
-        BigDecimal moneyWith10Zero = new BigDecimal("0.00000000001");
-        BigDecimal moneyWith11Zero = new BigDecimal("0.000000000001");
+        BigDecimal moneyWith10Zero = new BigDecimal("0.000001");
+        BigDecimal moneyWith11Zero = new BigDecimal("0.00001");
 
         SampleEntity entity = new SampleEntity();
         entity.setMoney(moneyWith10Zero);
@@ -156,6 +156,8 @@ public class AggregateTest {
         assertThat(getNewChildren(aggregate).size(), is(0));
         assertThat(getChangedChildren(aggregate).size(), is(0));
         assertThat(getRemovedChildren(aggregate).size(), is(1));
+
+        BigDecimal v = new BigDecimal("10.00");
     }
 
 

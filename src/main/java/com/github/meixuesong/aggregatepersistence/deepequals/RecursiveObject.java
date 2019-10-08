@@ -1,4 +1,4 @@
-package com.github.meixuesong.aggregatepersistence;
+package com.github.meixuesong.aggregatepersistence.deepequals;
 
 import java.util.HashSet;
 import java.util.Set;
