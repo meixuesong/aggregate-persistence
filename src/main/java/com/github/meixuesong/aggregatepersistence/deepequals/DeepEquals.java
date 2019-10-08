@@ -184,7 +184,13 @@ public class DeepEquals {
     private boolean addFieldsToCompare(DualObject dualObject, RecursiveObject recursiveObject) {
         Collection<Field> fields = ReflectionUtils.getDeepDeclaredFields(dualObject.a.getClass());
 
+        Set<String> ignoredFieldNames = deepEqualsOption.getIgnoreFieldNames().get(dualObject.a.getClass());
+
         for (Field field : fields) {
+            if (ignoredFieldNames != null && ignoredFieldNames.contains(field.getName())) {
+                continue;
+            }
+
             try {
                 recursiveObject.push(new DualObject(field.get(dualObject.a), field.get(dualObject.b)));
             } catch (Exception ignored) {

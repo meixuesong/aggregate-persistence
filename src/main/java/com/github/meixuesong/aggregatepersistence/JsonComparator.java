@@ -7,11 +7,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
-public class JsonComparator implements PropertyComparator {
+public class JsonComparator implements DeepComparator {
     private ObjectMapper mapper;
 
     @Override
-    public <T> boolean isAllPropertiesEqual(T a, T b) {
+    public <T> boolean isDeepEquals(T a, T b) {
         String jsonA = getJson(a);
         String jsonB = getJson(b);
 

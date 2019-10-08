@@ -10,6 +10,7 @@ public class DeepEqualsOption {
     private boolean ignoreCustomEquals = true;
     private final Set<Class> useCustomEqualsClasses = new HashSet<>();
     private final Map<Class, Comparator> useComparatorClasses = new HashMap<>();
+    private final Map<Class, Set<String>> ignoreFieldNames = new HashMap<>();
     private double doubleOffSet = 1e-15;
     private double floatOffSet = 1e-6;
 
@@ -47,5 +48,9 @@ public class DeepEqualsOption {
 
     public void setFloatOffSet(double floatOffSet) {
         this.floatOffSet = floatOffSet;
+    }
+
+    public Map<Class, Set<String>> getIgnoreFieldNames() {
+        return ignoreFieldNames;
     }
 }

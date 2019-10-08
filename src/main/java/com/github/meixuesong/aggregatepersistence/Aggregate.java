@@ -10,12 +10,12 @@ import java.util.stream.Collectors;
 public class Aggregate<R extends Versionable> {
     protected R root;
     protected R snapshot;
-    protected PropertyComparator propertyComparator;
+    protected DeepComparator deepComparator;
 
-    Aggregate(R root, DeepCopier copier, PropertyComparator propertyComparator) {
+    Aggregate(R root, DeepCopier copier, DeepComparator deepComparator) {
         this.root = root;
         this.snapshot = copier.copy(root);
-        this.propertyComparator = propertyComparator;
+        this.deepComparator = deepComparator;
     }
 
     public R getRoot() {
@@ -27,7 +27,7 @@ public class Aggregate<R extends Versionable> {
     }
 
     public boolean isChanged() {
-        return !propertyComparator.isAllPropertiesEqual(root, snapshot);
+        return !deepComparator.isDeepEquals(root, snapshot);
     }
 
     public boolean isNew() {
@@ -54,7 +54,7 @@ public class Aggregate<R extends Versionable> {
             T oldEntity = getEntity(oldEntities, id, getId);
             T newEntity = getEntity(newEntities, id, getId);
 
-            if (!propertyComparator.isAllPropertiesEqual(oldEntity, newEntity)) {
+            if (!deepComparator.isDeepEquals(oldEntity, newEntity)) {
                 results.add(newEntity);
             }
         }
