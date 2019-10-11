@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * Copyright 2012-2019 the original author or authors.
+ */
+
 package com.github.meixuesong.aggregatepersistence.deepequals;
 
 import java.lang.reflect.Array;
@@ -13,6 +26,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+
+/**
+ * Tests two objects for differences by doing a 'deep' comparison.
+ *
+ * Based on the deep equals implementation of https://github.com/jdereg/java-util
+ *
+ * @author John DeRegnaucourt (john@cedarsoftware.com)
+ * @author meixuesong
+ */
 public class DeepEquals {
     private DeepEqualsOption deepEqualsOption;
 
@@ -27,9 +49,9 @@ public class DeepEquals {
     /**
      * Compare two objects with a 'deep' comparison.  This will traverse the
      * Object graph and perform either a field-by-field comparison on each
-     * object (if not .equals() method has been overridden from Object), or it
-     * will call the customized .equals() method if it exists.  This method will
-     * allow object graphs loaded at different times (with different object ids)
+     * object, or it will call the customized .equals() method depends on options.
+     *
+     * This method will allow object graphs loaded at different times (with different object ids)
      * to be reliably compared.  Object.equals() / Object.hashCode() rely on the
      * object's identity, which would not consider to equivalent objects necessarily
      * equals.  This allows graphs containing instances of Classes that did no
@@ -118,7 +140,7 @@ public class DeepEquals {
     private boolean shouldUseCustomEquals(DualObject dualObject) {
         return ReflectionUtils.hasCustomEquals(dualObject.a.getClass()) &&
                 (
-                        deepEqualsOption.getUseCustomEqualsClasses().contains(dualObject.a.getClass())
+                        deepEqualsOption.getCustomEqualsClasses().contains(dualObject.a.getClass())
                                 || !deepEqualsOption.isIgnoreCustomEquals()
                 );
     }
