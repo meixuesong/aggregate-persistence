@@ -55,7 +55,7 @@ public class Aggregate<R extends Versionable> {
 
     /**
      * The aggregate root
-     * @return
+     * @return Aggregate root
      */
     public R getRoot() {
         return root;
@@ -63,7 +63,7 @@ public class Aggregate<R extends Versionable> {
 
     /**
      * The snapshot of the aggregate root
-     * @return
+     * @return Aggregate root snapshot
      */
     public R getRootSnapshot() {
         return snapshot;
