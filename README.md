@@ -1,4 +1,4 @@
-# aggregate-persistence
+4# aggregate-persistence
 
 ![](https://travis-ci.com/meixuesong/aggregate-persistence.svg?branch=master)
 
@@ -24,14 +24,25 @@
 
 工具类`DataObjectUtils`则提供了对象的对比功能。它可以帮助你修改数据库时只update那些变化了的字段。以Person为例，`DataObjectUtils.getDelta(personSnapshot, personCurrent)`将返回Delta值。如果属性没有发生变化，Delta的对应属性值为null, 否则为修改后的值。下表展示了这种差别，personCurrent是修改后的值，personSnapshot是旧值。
 
-![](clipboardimage.jpg)
  Object | ID | NAME | AGE | ADDRESS 
- ------------- |----|-----|-----:|-----
+ ------------- |----|-----|-----|-----
  personCurrent | 001 | Mike | 20 | Beijing 
  personSnapshot | 001 | Mike | 21 | Shanghai 
  delta | null | null | 21 | Shanghai 
 
-## 2. 示例
+## 2. 使用Aggregate-Persistence
+
+在项目中加入依赖：
+
+```xml
+        <dependency>
+            <groupId>com.github.meixuesong</groupId>
+            <artifactId>aggregate-persistence</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+```
+
+## 3. 示例
 接下来我们通过一个完整的示例展示Aggregate-Persistence的功能。本例以订单聚合的持久化为例，包括两个实体：订单（Order）和订单明细行（OrderItem）：
 
 ```java
@@ -66,14 +77,14 @@ public class OrderRepository {
 
 在本例中，领域模型与数据模型不一致。因此Repository将Domain model(e.g. Order)转换成Data object(e.g. OrderDO)，然后使用Mybatis完成持久化。查询时，进行反向操作，将Data object转换成Domain model.
 
-### 2.1 查询订单
+### 3.1 查询订单
 当创建Order聚合后，调用`AggregateFactory.createAggregate`创建Aggregate对象，它将自动保存Order的快照，以供后续对比。
 
 ```java
 public Aggregate<Order> findById(String id) {
     OrderDO orderDO = orderMapper.selectByPrimaryKey(id);
     if (orderDO == null) {
-        throw new EntityNotFoundException(“Order(“ + id + “) not found”);
+        throw new EntityNotFoundException("Order(" + id + ") not found");
     }
 
     Order order = orderDO.toOrder();
@@ -84,7 +95,7 @@ public Aggregate<Order> findById(String id) {
 }
 ```
 
-### 2.2 保存新增订单、修改订单
+### 3.2 保存新增订单、修改订单
 
 使用`save`接口方法完成订单的新增和修改操作，示例代码如下：
 
@@ -115,68 +126,69 @@ void save(Aggregate<Order> orderAggregate) {
 首先更新聚合根。领域对象(Order)首先被转换成数据对象（OrderDO），然后DataObjectUtils对比OrderDO的历史版本，得到Delta值，最终调用MyBatis的update selective方法更新到数据库中。代码如下：
 
 ```java
-    private void updateAggregateRoot(Aggregate<Order> orderAggregate) {
-        //get changed fields and its value
-        OrderDO delta = getOrderDODelta(orderAggregate);
-        //only update changed fields, avoid update all fields
-        if (orderMapper.updateByPrimaryKeySelective(delta) != 1) {
-            throw new OptimisticLockException(String.format(“Update order (%s) error, it’s not found or changed by another user”, orderAggregate.getRoot().getId()));
-        }
+private void updateAggregateRoot(Aggregate<Order> orderAggregate) {
+    //get changed fields and its value
+    OrderDO delta = getOrderDODelta(orderAggregate);
+    //only update changed fields, avoid update all fields
+    if (orderMapper.updateByPrimaryKeySelective(delta) != 1) {
+        throw new OptimisticLockException(String.format("Update order (%s) error, it’s not found or changed by another user", orderAggregate.getRoot().getId()));
     }
-    private OrderDO getOrderDODelta(Aggregate<Order> orderAggregate) {
-        OrderDO current = new OrderDO(orderAggregate.getRoot());
-        OrderDO old = new OrderDO(orderAggregate.getRootSnapshot());
-        //compare field by field, if field is not changed, its value is null, otherwise its value is current new value
-        OrderDO delta = DataObjectUtils.getDelta(old, current);
-        //because id and version is null, so set to new value, and then mapper can update by id and version
-        delta.setId(current.getId());
-        delta.setVersion(current.getVersion());
+}
 
-        return delta;
-    }
+private OrderDO getOrderDODelta(Aggregate<Order> orderAggregate) {
+    OrderDO current = new OrderDO(orderAggregate.getRoot());
+    OrderDO old = new OrderDO(orderAggregate.getRootSnapshot());
+    //compare field by field, if field is not changed, its value is null, otherwise its value is current new value
+    OrderDO delta = DataObjectUtils.getDelta(old, current);
+    //because id and version is null, so set to new value, and then mapper can update by id and version
+    delta.setId(current.getId());
+    delta.setVersion(current.getVersion());
+
+    return delta;
+}
 ```
 
 对于订单明细行的增删改，都是通过Aggregate找到新增、删除和修改的实体，然后完成数据库操作。代码示例如下：
 
 ```java
-    private void removeOrderItems(Aggregate<Order> orderAggregate) {
-        Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
-        removedEntities.stream().forEach((item) -> {
-            if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
-                throw new OptimisticLockException(String.format("Delete order item (%d) error, it's not found", item.getId()));
-            }
-        });
-    }
-
-    private void updateOrderItems(Aggregate<Order> orderAggregate) {
-        Collection<OrderItem> updatedEntities = orderAggregate.findChangedEntities(Order::getItems, OrderItem::getId);
-        updatedEntities.stream().forEach((item) -> {
-            if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(orderAggregate.getRoot().getId(), item)) != 1) {
-                throw new OptimisticLockException(String.format(“Update order item (%d) error, it’s not found”, item.getId()));
-            }
-        });
-    }
-
-    private void insertOrderItems(Aggregate<Order> orderAggregate) {
-        //OrderItem.getId()为空表示新增实体
-        Collection<OrderItem> newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -> item.getId() == null);
-        if (newEntities.size() > 0) {
-            List<OrderItemDO> itemDOs = newEntities.stream().map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item)).collect(Collectors.toList());
-            orderItemMapper.insertAll(itemDOs);
+private void removeOrderItems(Aggregate<Order> orderAggregate) {
+    Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
+    removedEntities.stream().forEach((item) -> {
+        if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
+            throw new OptimisticLockException(String.format("Delete order item (%d) error, it's not found", item.getId()));
         }
+    });
+}
+
+private void updateOrderItems(Aggregate<Order> orderAggregate) {
+    Collection<OrderItem> updatedEntities = orderAggregate.findChangedEntities(Order::getItems, OrderItem::getId);
+    updatedEntities.stream().forEach((item) -> {
+        if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(orderAggregate.getRoot().getId(), item)) != 1) {
+            throw new OptimisticLockException(String.format("Update order item (%d) error, it’s not found", item.getId()));
+        }
+    });
+}
+
+private void insertOrderItems(Aggregate<Order> orderAggregate) {
+    //OrderItem.getId()为空表示新增实体
+    Collection<OrderItem> newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -> item.getId() == null);
+    if (newEntities.size() > 0) {
+        List<OrderItemDO> itemDOs = newEntities.stream().map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item)).collect(Collectors.toList());
+        orderItemMapper.insertAll(itemDOs);
     }
+}
 ```
 
-### 2.3 删除订单
+### 3.3 删除订单
 
 ```java
-    public void remove(Aggregate<Order> aggregate) {
-        Order order = aggregate.getRoot();
-        if (orderMapper.delete(new OrderDO(order)) != 1) {
-            throw new OptimisticLockException(String.format("Delete order (%s) error, it's not found or changed by another user", order.getId()));
-        }
-        orderItemMapper.deleteByOrderId(order.getId());
+public void remove(Aggregate<Order> aggregate) {
+    Order order = aggregate.getRoot();
+    if (orderMapper.delete(new OrderDO(order)) != 1) {
+        throw new OptimisticLockException(String.format("Delete order (%s) error, it's not found or changed by another user", order.getId()));
     }
+    orderItemMapper.deleteByOrderId(order.getId());
+}
 ```
 
 完整的示例代码见[订单示例项目](https://github.com/meixuesong/aggregate-persistence-sample)
