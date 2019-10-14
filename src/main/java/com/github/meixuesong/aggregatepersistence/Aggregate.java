@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
  *
  <pre><code class='java'>
  Aggregate<Order> orderAggregate = repository.findById("orderId");
- orderAggregate.doSomething();
+ Order order = orderAggregate.getRoot();
+ order.doSomething();
  repository.save(orderAggregate);
 </code></pre>
  *
