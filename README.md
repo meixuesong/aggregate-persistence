@@ -7,11 +7,11 @@
 
 在DDD实践中，聚合应该作为一个完整的单元进行读取和持久化，以确保业务的不变性或者说业务规则不变破坏。例如，订单总金额应该与订单明细金额之和一致。
 
-由于领域模型和数据库的数据模型可能不一致，并且聚合可能涉及多个实体，因此Hibernate, MyBatis和Spring Data等框架直接用于聚合持久化时，总是面临一些困难，而且代码也不够优雅。有人认为NoSQL是最适合聚合持久化的方案，确实如此，每个聚合实例就是一个文档，NoSQL天然为聚合持久化提供了很好的支持。然而并不是所有系统都适合用NoSQL，因此出现了另一种适用于关系型数据库的解决方案，将领域事件引入持久化过程。也就是在处理业务过程中，聚合抛出领域事件，Repository根据领域事件的不同，执行不同的SQL，完成数据库的修改。但这样的话，Repository层就要引入一些逻辑判断，代码冗余增加了维护成本。
+由于领域模型和数据库的数据模型可能不一致，并且聚合可能涉及多个实体，因此Hibernate, MyBatis和Spring Data等框架直接用于聚合持久化时，总是面临一些困难，而且代码也不够优雅。有人认为NoSQL是最适合聚合持久化的方案。确实如此，每个聚合实例就是一个文档，NoSQL天然为聚合持久化提供了很好的支持。然而并不是所有系统都适合用NoSQL。当遇到关系型数据库时，一种方式是将领域事件引入持久化过程。也就是在处理业务过程中，聚合抛出领域事件，Repository根据领域事件的不同，执行不同的SQL，完成数据库的修改。但这样的话，Repository层就要引入一些逻辑判断，代码冗余增加了维护成本。
 
 本项目旨在提供一种轻量级聚合持久化方案，帮助开发者真正从业务出发设计领域模型，不需要考虑持久化的事情。在实现Repository持久化时，不需要考虑业务逻辑，只负责聚合的持久化，从而真正做到关注点分离。
 
-方案的核心是`Aggregate<T>`容器。当Repository查询聚合时，返回的不是聚合本身，而是聚合容器`Aggregate<T>`，T是聚合根的类型。`Aggregate<T>`保留了聚合的历史快照，因此在保存聚合时，就可以与快照进行对比，找到需要修改的实体和字段，然后完成持久化工作。
+方案的核心是`Aggregate<T>`容器。当Repository查询聚合时，返回的不是聚合本身，而是聚合容器`Aggregate<T>`，T是聚合根的类型。`Aggregate<T>`保留了聚合的历史快照，因此在Repository保存聚合时，就可以与快照进行对比，找到需要修改的实体和字段，然后完成持久化工作。
 
 `Aggregate<T>`作为聚合的载体，提供以下功能：
 * `public R getRoot()`：获取聚合根
@@ -123,7 +123,9 @@ void save(Aggregate<Order> orderAggregate) {
         Order order = orderAggregate.getRoot();
         orderMapper.insert(new OrderDO(order));
         //insert order items
-        List<OrderItemDO> itemDOs = order.getItems().stream().map(item -> new OrderItemDO(order.getId(), item)).collect(Collectors.toList());
+        List<OrderItemDO> itemDOs = order.getItems().stream()
+            .map(item -> new OrderItemDO(order.getId(), item))
+            .collect(Collectors.toList());
         orderItemMapper.insertAll(itemDOs);
     } else if (orderAggregate.isChanged()) {
         //update order 
@@ -149,7 +151,10 @@ private void updateAggregateRoot(Aggregate<Order> orderAggregate) {
     //only update changed fields, avoid update all fields: 
     // e.g. update sales_order set xxx = ?, version = version + 1 where id = ? and version = ?
     if (orderMapper.updateByPrimaryKeySelective(delta) != 1) {
-        throw new OptimisticLockException(String.format("Update order (%s) error, it’s not found or changed by another user", orderAggregate.getRoot().getId()));
+        throw new OptimisticLockException(
+            String.format("Update order (%s) error, it’s not found or changed by another user", 
+                orderAggregate.getRoot().getId())
+        );
     }
 }
 
@@ -173,7 +178,9 @@ private void removeOrderItems(Aggregate<Order> orderAggregate) {
     Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
     removedEntities.stream().forEach((item) -> {
         if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
-            throw new OptimisticLockException(String.format("Delete order item (%d) error, it's not found", item.getId()));
+            throw new OptimisticLockException(
+                String.format("Delete order item (%d) error, it's not found", item.getId())
+            );
         }
     });
 }
@@ -182,7 +189,9 @@ private void updateOrderItems(Aggregate<Order> orderAggregate) {
     Collection<OrderItem> updatedEntities = orderAggregate.findChangedEntities(Order::getItems, OrderItem::getId);
     updatedEntities.stream().forEach((item) -> {
         if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(orderAggregate.getRoot().getId(), item)) != 1) {
-            throw new OptimisticLockException(String.format("Update order item (%d) error, it’s not found", item.getId()));
+            throw new OptimisticLockException(
+                String.format("Update order item (%d) error, it’s not found", item.getId())
+            );
         }
     });
 }
@@ -191,7 +200,9 @@ private void insertOrderItems(Aggregate<Order> orderAggregate) {
     //OrderItem.getId()为空表示新增实体
     Collection<OrderItem> newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -> item.getId() == null);
     if (newEntities.size() > 0) {
-        List<OrderItemDO> itemDOs = newEntities.stream().map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item)).collect(Collectors.toList());
+        List<OrderItemDO> itemDOs = newEntities.stream()
+            .map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item))
+            .collect(Collectors.toList());
         orderItemMapper.insertAll(itemDOs);
     }
 }
@@ -209,7 +220,9 @@ private void insertOrderItems(Aggregate<Order> orderAggregate) {
 public void remove(Aggregate<Order> aggregate) {
     Order order = aggregate.getRoot();
     if (orderMapper.delete(new OrderDO(order)) != 1) {
-        throw new OptimisticLockException(String.format("Delete order (%s) error, it's not found or changed by another user", order.getId()));
+        throw new OptimisticLockException(
+            String.format("Delete order (%s) error, it's not found or changed by another user", order.getId())
+        );
     }
     orderItemMapper.deleteByOrderId(order.getId());
 }
