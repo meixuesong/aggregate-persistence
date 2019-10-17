@@ -11,9 +11,22 @@
 
 本项目旨在提供一种轻量级聚合持久化方案，帮助开发者真正从业务出发设计领域模型，不需要考虑持久化的事情。在实现Repository持久化时，不需要考虑业务逻辑，只负责聚合的持久化，从而真正做到关注点分离。
 
-方案的核心是`Aggregate<T>`容器。当Repository查询聚合时，返回的不是聚合本身，而是聚合容器`Aggregate<T>`，T是聚合根的类型。`Aggregate<T>`保留了聚合的历史快照，因此在Repository保存聚合时，就可以与快照进行对比，找到需要修改的实体和字段，然后完成持久化工作。
+方案的核心是`Aggregate<T>`容器，T是聚合根的类型。Repository以`Aggregate<T>`为核心，当Repository查询或保存聚合时，返回的不是聚合本身，而是聚合容器`Aggregate<T>`。以订单付款为例，Application Service的代码如下：
 
-`Aggregate<T>`作为聚合的载体，提供以下功能：
+```java
+@Transactional
+public void checkout(String orderId, CheckoutRequest request) {
+    Aggregate<Order> aggregate = orderRepository.findById(orderId);
+    Order order = aggregate.getRoot();
+
+    Payment payment = new Payment(PaymentType.from(request.getPaymentType()), request.getAmount());
+    order.checkout(payment);
+
+    orderRepository.save(aggregate);
+}
+```
+
+`Aggregate<T>`保留了聚合的历史快照，因此在Repository保存聚合时，就可以与快照进行对比，找到需要修改的实体和字段，然后完成持久化工作。它提供以下功能：
 * `public R getRoot()`：获取聚合根
 * `public R getRootSnapshot()`: 获取聚合根的历史快照
 * `public boolean isChanged()`: 聚合是否发生了变化
