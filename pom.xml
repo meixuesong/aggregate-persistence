@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.meixuesong</groupId>
     <artifactId>aggregate-persistence</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>aggregate-persistence</name>
@@ -35,6 +35,7 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <jackson.version>2.11.2</jackson.version>
     </properties>
 
     <build>
@@ -54,22 +55,22 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.9.9</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.10.0.pr1</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>2.9.9</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.9.9</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
