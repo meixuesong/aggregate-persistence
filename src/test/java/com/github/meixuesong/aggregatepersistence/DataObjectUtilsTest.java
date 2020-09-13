@@ -13,7 +13,6 @@
 
 package com.github.meixuesong.aggregatepersistence;
 
-import lombok.EqualsAndHashCode;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -92,7 +91,6 @@ public class DataObjectUtilsTest {
         assertEquals(expectedDelta, actualDelta);
     }
 
-    @EqualsAndHashCode
     static class SampleEntity {
         private String id;
         private boolean checked;
@@ -114,6 +112,43 @@ public class DataObjectUtilsTest {
             length = newLength;
             this.money = money;
             this.children = children;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SampleEntity that = (SampleEntity) o;
+
+            if (checked != that.checked) return false;
+            if (age != that.age) return false;
+            if (Double.compare(that.area, area) != 0) return false;
+            if (id != null ? !id.equals(that.id) : that.id != null) return false;
+            if (length != null ? !length.equals(that.length) : that.length != null) return false;
+            if (area2 != null ? !area2.equals(that.area2) : that.area2 != null) return false;
+            if (money != null ? !money.equals(that.money) : that.money != null) return false;
+            if (birthday != null ? !birthday.equals(that.birthday) : that.birthday != null) return false;
+            if (meetingTime != null ? !meetingTime.equals(that.meetingTime) : that.meetingTime != null) return false;
+            return children != null ? children.equals(that.children) : that.children == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            long temp;
+            result = id != null ? id.hashCode() : 0;
+            result = 31 * result + (checked ? 1 : 0);
+            result = 31 * result + age;
+            result = 31 * result + (length != null ? length.hashCode() : 0);
+            temp = Double.doubleToLongBits(area);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
+            result = 31 * result + (area2 != null ? area2.hashCode() : 0);
+            result = 31 * result + (money != null ? money.hashCode() : 0);
+            result = 31 * result + (birthday != null ? birthday.hashCode() : 0);
+            result = 31 * result + (meetingTime != null ? meetingTime.hashCode() : 0);
+            result = 31 * result + (children != null ? children.hashCode() : 0);
+            return result;
         }
     }
 

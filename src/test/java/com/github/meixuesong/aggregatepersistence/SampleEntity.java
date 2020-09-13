@@ -13,8 +13,6 @@
 
 package com.github.meixuesong.aggregatepersistence;
 
-import lombok.Data;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +23,6 @@ import java.util.List;
 /**
  * @author meixuesong
  */
-@Data
 public class SampleEntity implements Versionable, Serializable {
     private String id = "";
     private boolean checked = true;
@@ -44,4 +41,87 @@ public class SampleEntity implements Versionable, Serializable {
         return this.version;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void setChecked(boolean checked) {
+        this.checked = checked;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public long getMilliseconds() {
+        return milliseconds;
+    }
+
+    public void setMilliseconds(long milliseconds) {
+        this.milliseconds = milliseconds;
+    }
+
+    public float getLength() {
+        return length;
+    }
+
+    public void setLength(float length) {
+        this.length = length;
+    }
+
+    public double getArea() {
+        return area;
+    }
+
+    public void setArea(double area) {
+        this.area = area;
+    }
+
+    public BigDecimal getMoney() {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money) {
+        this.money = money;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    public LocalDate getMeetingTime() {
+        return meetingTime;
+    }
+
+    public void setMeetingTime(LocalDate meetingTime) {
+        this.meetingTime = meetingTime;
+    }
+
+    public List<SampleEntity> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<SampleEntity> children) {
+        this.children = children;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
 }
