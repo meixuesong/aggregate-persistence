@@ -61,10 +61,17 @@ public final class ReflectionUtils
     }
 
     /**
-     * Determine if the passed in class (classToCheck) has the annotation (annoClass) on itself,
-     * any of its super classes, any of it's interfaces, or any of it's super interfaces.
-     * This is a exhaustive check throughout the complete inheritance hierarchy.
+     *
      * @return the Annotation if found, null otherwise.
+     */
+    /**
+     * Determine if the passed in class (classToCheck) has the annotation (annoClass) on itself,
+     *      * any of its super classes, any of it's interfaces, or any of it's super interfaces.
+     *      * This is a exhaustive check throughout the complete inheritance hierarchy.
+     * @param classToCheck classToCheck
+     * @param annoClass annoClass
+     * @param <T> T
+     * @return T
      */
     public static <T extends Annotation> T getClassAnnotation(final Class<?> classToCheck, final Class<T> annoClass)
     {
@@ -176,6 +183,7 @@ public final class ReflectionUtils
      * that would need further processing (reference fields).  This
      * makes field traversal on a class faster as it does not need to
      * continually process known fields like primitives.
+     * @param fields fields
      */
     public static void getDeclaredFields(Class<?> c, Collection<Field> fields) {
         try

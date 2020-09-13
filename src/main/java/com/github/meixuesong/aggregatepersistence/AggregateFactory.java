@@ -25,7 +25,7 @@ public class AggregateFactory {
      *
      * @param root The aggregate root
      * @param <R> The type of aggregate root
-     * @return
+     * @return the aggregate object
      */
     public static <R extends Versionable> Aggregate<R> createAggregate(R root) {
         return new Aggregate<R>(root, copier, new JavaUtilDeepComparator());
@@ -33,7 +33,7 @@ public class AggregateFactory {
 
     /**
      * set deep copier.
-     * @param copier
+     * @param copier the deepcopier object
      */
     public static void setCopier(DeepCopier copier) {
         AggregateFactory.copier = copier;

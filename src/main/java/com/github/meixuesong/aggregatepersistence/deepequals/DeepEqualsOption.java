@@ -65,7 +65,7 @@ public class DeepEqualsOption {
 
     /**
      * set whether ignore custom equals method when compare two objects.
-     * @param ignoreCustomEquals
+     * @param ignoreCustomEquals ignoreCustomEquals
      */
     public void setIgnoreCustomEquals(boolean ignoreCustomEquals) {
         this.ignoreCustomEquals = ignoreCustomEquals;
@@ -85,7 +85,7 @@ public class DeepEqualsOption {
      *
      * When compare two double number, doubleOffSet is used to decide whether they are equals.
      * For example, 1.001 is equals to 1.00101 if offset is equal or larger then 0.00001
-     * @param doubleOffSet
+     * @param doubleOffSet doubleOffSet
      */
     public void setDoubleOffSet(double doubleOffSet) {
         this.doubleOffSet = doubleOffSet;
@@ -106,7 +106,7 @@ public class DeepEqualsOption {
      * When compare two float number, floatOffSet is used to decide whether they are equals.
      * For example, 1.001 is equals to 1.00101 if offset is equal or larger then 0.00001
      *
-     * @param floatOffSet
+     * @param floatOffSet floatOffSet
      */
     public void setFloatOffSet(double floatOffSet) {
         this.floatOffSet = floatOffSet;
@@ -115,7 +115,7 @@ public class DeepEqualsOption {
     /**
      * Specify the field names to ignore when compare the Class instance.
      * For example, to compare Person.class, we can specify the ignoreFieldNames include : age and children
-     * @return
+     * @return a map
      */
     public Map<Class, Set<String>> getIgnoreFieldNames() {
         return ignoreFieldNames;

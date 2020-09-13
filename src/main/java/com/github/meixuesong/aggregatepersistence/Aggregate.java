@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * The repository will return the aggregate to application service, and save the aggregate when the business is done.
  *
  <pre><code class='java'>
- Aggregate<Order> orderAggregate = repository.findById("orderId");
+ Aggregate&lt;Order&gt; orderAggregate = repository.findById("orderId");
  Order order = orderAggregate.getRoot();
  order.doSomething();
  repository.save(orderAggregate);
@@ -90,7 +90,7 @@ public class Aggregate<R extends Versionable> {
      * Find the new entities. New entities are going to be insert into the DB.
      *
      * <pre><code class="java">
-     Collection<OrderItem> newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -> item.getId() == null);
+     Collection&lt;OrderItem&gt; newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -&gt; item.getId() == null);
      //insert all the new entities.
      * </code></pre>
      *
