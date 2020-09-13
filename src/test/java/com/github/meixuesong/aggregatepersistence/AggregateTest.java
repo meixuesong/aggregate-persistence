@@ -14,21 +14,34 @@
 package com.github.meixuesong.aggregatepersistence;
 
 
+import com.github.meixuesong.aggregatepersistence.complex_object.Contract;
+import com.github.meixuesong.aggregatepersistence.complex_object.ContractBuilder;
+import com.github.meixuesong.aggregatepersistence.complex_object.ContractStatus;
+import com.github.meixuesong.aggregatepersistence.complex_object.LoanCustomer;
+import com.github.meixuesong.aggregatepersistence.complex_object.RepaymentType;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
  * @author meixuesong
  */
 public class AggregateTest {
+    @Before
+    public void setUp() throws Exception {
+        AggregateFactory.setCopier(new SerializableDeepCopier());
+    }
+
     @Test
     public void should_be_new_when_version_is_NEW_VERSION() {
         SampleEntity entity = new SampleEntity();
@@ -176,7 +189,26 @@ public class AggregateTest {
         BigDecimal v = new BigDecimal("10.00");
     }
 
+    @Test
+    public void should_create_snapshot() {
+        LocalDateTime now = LocalDateTime.now();
+        Contract expectedContract = new ContractBuilder()
+                .setId("ABCD")
+                .setCreatedAt(now)
+                .setRepaymentType(RepaymentType.DEBJ)
+                .setStatus(ContractStatus.ACTIVE)
+                .setCustomer(new LoanCustomer("", "", "123456200012319876", ""))
+                .setInterestRate(BigDecimal.TEN)
+                .setMaturityDate(now.plusYears(1).toLocalDate())
+                .setCommitment(BigDecimal.valueOf(1000.00))
+                .createContract();
 
+        Aggregate<Contract> aggregate = AggregateFactory.createAggregate(expectedContract);
+        Contract actualContract = aggregate.getRootSnapshot();
+
+        assertEquals(expectedContract, actualContract);
+        new JavaUtilDeepComparator().isDeepEquals(actualContract, expectedContract);
+    }
 
     private Collection<SampleEntity> getNewChildren(Aggregate<SampleEntity> aggregate) {
         return aggregate.findNewEntities(SampleEntity::getChildren, (item) -> item.getVersion() == Versionable.NEW_VERSION);

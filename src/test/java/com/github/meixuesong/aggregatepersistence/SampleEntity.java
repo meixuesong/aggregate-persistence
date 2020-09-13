@@ -15,6 +15,7 @@ package com.github.meixuesong.aggregatepersistence;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.List;
  * @author meixuesong
  */
 @Data
-public class SampleEntity implements Versionable{
+public class SampleEntity implements Versionable, Serializable {
     private String id = "";
     private boolean checked = true;
     private int age = 0;

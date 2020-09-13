@@ -19,6 +19,7 @@ package com.github.meixuesong.aggregatepersistence;
  * @author meixuesong
  */
 public class AggregateFactory {
+    private static DeepCopier copier = new SerializableDeepCopier();
     /**
      * The factory method.
      *
@@ -27,6 +28,14 @@ public class AggregateFactory {
      * @return
      */
     public static <R extends Versionable> Aggregate<R> createAggregate(R root) {
-        return new Aggregate<R>(root, new JsonDeepCopier(), new JavaUtilDeepComparator());
+        return new Aggregate<R>(root, copier, new JavaUtilDeepComparator());
+    }
+
+    /**
+     * set deep copier.
+     * @param copier
+     */
+    public static void setCopier(DeepCopier copier) {
+        AggregateFactory.copier = copier;
     }
 }
