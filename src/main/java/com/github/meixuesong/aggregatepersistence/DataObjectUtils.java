@@ -39,6 +39,9 @@ import java.util.Set;
  * @author meixuesong
  */
 public class DataObjectUtils {
+    private DataObjectUtils() {
+        throw new IllegalStateException("Utility class");
+    }
 
     /**
      * Get the delta of two objects.

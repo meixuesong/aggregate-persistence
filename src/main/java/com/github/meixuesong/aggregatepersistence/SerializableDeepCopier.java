@@ -13,6 +13,7 @@
 
 package com.github.meixuesong.aggregatepersistence;
 
+import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.Serializable;
@@ -28,9 +29,12 @@ public class SerializableDeepCopier implements DeepCopier{
     @Override
     public <T> T copy(T object) {
         if (object instanceof Serializable) {
-            return (T) SerializationUtils.clone((Serializable) object);
+            try {
+                return (T) SerializationUtils.clone((Serializable) object);
+            } catch (SerializationException exception) {
+                throw new IllegalArgumentException(String.format("%s should be a serializable object.", object.getClass().getName()), exception);
+            }
         }
-
-        throw new IllegalArgumentException("It's not a serializable object.");
+        throw new IllegalArgumentException(String.format("%s should be a serializable object.", object.getClass().getName()));
     }
 }

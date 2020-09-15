@@ -17,7 +17,9 @@ package com.github.meixuesong.aggregatepersistence;
 import com.github.meixuesong.aggregatepersistence.complex_object.Contract;
 import com.github.meixuesong.aggregatepersistence.complex_object.ContractBuilder;
 import com.github.meixuesong.aggregatepersistence.complex_object.ContractStatus;
+import com.github.meixuesong.aggregatepersistence.complex_object.Loan;
 import com.github.meixuesong.aggregatepersistence.complex_object.LoanCustomer;
+import com.github.meixuesong.aggregatepersistence.complex_object.RepaymentPlan;
 import com.github.meixuesong.aggregatepersistence.complex_object.RepaymentType;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -220,5 +223,61 @@ public class AggregateTest {
 
     private Collection<SampleEntity> getRemovedChildren(Aggregate<SampleEntity> aggregate) {
         return aggregate.findRemovedEntities(SampleEntity::getChildren, SampleEntity::getId);
+    }
+
+    @Test
+    public void should_find_collection_delta_for_new_aggregate() {
+        Loan loan = new Loan("ID", 12, Versionable.NEW_VERSION);
+        loan.createPlans();
+
+        Aggregate<Loan> aggregate = AggregateFactory.createAggregate(loan);
+        Map<Aggregate.DeltaType, Collection<RepaymentPlan>> collectionDelta = aggregate.findCollectionDelta(Loan::getRepaymentPlans, RepaymentPlan::getNo);
+
+        assertEquals(12, collectionDelta.get(Aggregate.DeltaType.NEW).size());
+
+        //exists aggregate
+        loan.setVersion(10);
+        aggregate = AggregateFactory.createAggregate(loan);
+        loan.setTotalMonth(22);
+        loan.createPlans();
+        Map<Aggregate.DeltaType, Collection<RepaymentPlan>> collectionDelta2 = aggregate.findCollectionDelta(Loan::getRepaymentPlans, RepaymentPlan::getNo);
+        assertEquals(10, collectionDelta2.get(Aggregate.DeltaType.NEW).size());
+        assertEquals(0, collectionDelta2.get(Aggregate.DeltaType.UPDATED).size());
+        assertEquals(0, collectionDelta2.get(Aggregate.DeltaType.REMOVED).size());
+    }
+
+    @Test
+    public void should_find_collection_delta_for_exists_aggregate() {
+        Loan loan = new Loan("ID", 12, Versionable.NEW_VERSION);
+        loan.createPlans();
+        loan.getRepaymentPlans().get(0).setStatus("PAID");
+        loan.setVersion(10);
+        Aggregate<Loan> aggregate =AggregateFactory.createAggregate(loan);
+
+        loan.setTotalMonth(22);
+        loan.createPlans();
+
+        Map<Aggregate.DeltaType, Collection<RepaymentPlan>> collectionDelta2 = aggregate.findCollectionDelta(Loan::getRepaymentPlans, RepaymentPlan::getNo);
+        assertEquals(10, collectionDelta2.get(Aggregate.DeltaType.NEW).size());
+        assertEquals(1, collectionDelta2.get(Aggregate.DeltaType.UPDATED).size());
+        assertEquals(0, collectionDelta2.get(Aggregate.DeltaType.UPDATED).stream().findFirst().get().getNo().intValue());
+        assertEquals(0, collectionDelta2.get(Aggregate.DeltaType.REMOVED).size());
+    }
+
+    @Test
+    public void should_find_collection_delta_for_exists_aggregate2() {
+        Loan loan = new Loan("ID", 22, Versionable.NEW_VERSION);
+        loan.createPlans();
+        loan.getRepaymentPlans().get(0).setStatus("PAID");
+        loan.setVersion(10);
+        Aggregate<Loan> aggregate =AggregateFactory.createAggregate(loan);
+
+        loan.setTotalMonth(10);
+        loan.createPlans();
+
+        Map<Aggregate.DeltaType, Collection<RepaymentPlan>> collectionDelta2 = aggregate.findCollectionDelta(Loan::getRepaymentPlans, RepaymentPlan::getNo);
+        assertEquals(0, collectionDelta2.get(Aggregate.DeltaType.NEW).size());
+        assertEquals(1, collectionDelta2.get(Aggregate.DeltaType.UPDATED).size());
+        assertEquals(12, collectionDelta2.get(Aggregate.DeltaType.REMOVED).size());
     }
 }

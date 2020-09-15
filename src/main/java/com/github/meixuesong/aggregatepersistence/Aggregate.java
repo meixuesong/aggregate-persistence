@@ -15,6 +15,9 @@ package com.github.meixuesong.aggregatepersistence;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -87,6 +90,7 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
+     * This method is deprecated, please use findCollectionDelta instead.
      * Find the new entities. New entities are going to be insert into the DB.
      *
      * <pre><code class="java">
@@ -99,6 +103,7 @@ public class Aggregate<R extends Versionable> {
      * @param <T> The entity type. e.g. OrderItem
      * @return All the entities that has been created.
      */
+    @Deprecated
     public <T> Collection<T> findNewEntities(Function<R, Collection<T>> getCollection, Predicate<T> isNew) {
         Collection<T> newEntities = getCollection.apply(root);
 
@@ -106,6 +111,7 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
+     * This method is deprecated, please use findCollectionDelta instead.
      * Find the changed entities. Changed entities are going to be update into the DB.
      * @param getCollection The function of the aggregate root, used to get entity collection. e.g. Order:getItems
      * @param getId The function of get ID. Entity are identified by ID.
@@ -113,6 +119,7 @@ public class Aggregate<R extends Versionable> {
      * @param <ID> The type of the entity id.
      * @return All the entities that has been changed.
      */
+    @Deprecated
     public <T, ID> Collection<T> findChangedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Collection<T> newEntities = getCollection.apply(root);
         Collection<T> oldEntities = getCollection.apply(snapshot);
@@ -136,6 +143,7 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
+     * This method is deprecated, please use findCollectionDelta instead.
      * Find the removed entities. Removed entities are going to be delete logically or physically from the DB.
      * @param getCollection  The function of the aggregate root, used to get entity collection. e.g. Order:getItems
      * @param getId The function of get ID. Entity are identified by ID.
@@ -143,6 +151,7 @@ public class Aggregate<R extends Versionable> {
      * @param <ID> The type of the entity id.
      * @return All the entities that has been removed.
      */
+    @Deprecated
     public <T, ID> Collection<T> findRemovedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Collection<T> newEntities = getCollection.apply(root);
         Collection<T> oldEntities = getCollection.apply(snapshot);
@@ -153,6 +162,34 @@ public class Aggregate<R extends Versionable> {
         oldIds.removeAll(newIds);
 
         return oldEntities.stream().filter(item -> oldIds.contains(getId.apply(item))).collect(Collectors.toList());
+    }
+
+    public <T, ID> Map<DeltaType, Collection<T>> findCollectionDelta(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
+        Map<DeltaType, Collection<T>> results = new HashMap<>();
+
+        if (isNew()) {
+            results.put(DeltaType.NEW, getCollection.apply(root));
+            results.put(DeltaType.UPDATED, new ArrayList<>());
+            results.put(DeltaType.REMOVED, new ArrayList<>());
+        } else {
+            results.put(DeltaType.NEW, getCollectionNewEntities(getCollection, getId));
+            results.put(DeltaType.UPDATED, findChangedEntities(getCollection, getId));
+            results.put(DeltaType.REMOVED, findRemovedEntities(getCollection, getId));
+        }
+
+        return results;
+    }
+
+    private <T, ID> List<T> getCollectionNewEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
+        Collection<T> currentEntities = getCollection.apply(root);
+        Collection<T> snapshotEntities = getCollection.apply(snapshot);
+
+        Set<ID> currentIds = getEntityIds(currentEntities, getId);
+        Set<ID> snapshotIds = getEntityIds(snapshotEntities, getId);
+
+        currentIds.removeAll(snapshotIds);
+        List<T> newEntities = currentEntities.stream().filter(i -> currentIds.contains(getId.apply(i))).collect(Collectors.toList());
+        return newEntities;
     }
 
     private <T, ID> Set<ID> getEntityIds(Collection<T> entity, Function<T, ID> getId) {
@@ -166,6 +203,12 @@ public class Aggregate<R extends Versionable> {
             }
         }
 
-        throw new RuntimeException("Internal error. Couldn't find entity with id: " + id.toString());
+        throw new IllegalArgumentException(String.format("Internal error. Couldn't find entity with id: %s", id == null? "null" :id.toString()));
+    }
+
+    public static enum DeltaType {
+        NEW,
+        UPDATED,
+        REMOVED;
     }
 }

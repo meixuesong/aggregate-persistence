@@ -19,6 +19,10 @@ package com.github.meixuesong.aggregatepersistence;
  * @author meixuesong
  */
 public class AggregateFactory {
+    private AggregateFactory() {
+        throw new IllegalStateException("A factory class, please use static method");
+    }
+
     private static DeepCopier copier = new SerializableDeepCopier();
     /**
      * The factory method.
