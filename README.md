@@ -219,3 +219,6 @@ public void remove(Aggregate<Order> aggregate) {
 
 ## 4. 总结
 总的来说，本项目提供了一种轻量级聚合持久化方案，能够帮助开发者设计干净的领域模型的同时，很好地支持Repository做持久化工作。通过持有聚合根的快照，`Aggregate<T>`可以识别聚合发生了哪些变化，然后Repository使用基于Version的乐观锁和DataObjectUtils在字段属性级别的比较功能，实现按需更新数据库。
+
+## 5. Changelog
+1.2 修改了之前采用对比字段值，如果为null时判断为未修改的方式。新方式改为使用`DataObjectUtils.getChangedFields`获取变更的字段名。
