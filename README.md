@@ -31,17 +31,11 @@ public void checkout(String orderId, CheckoutRequest request) {
 * `public R getRootSnapshot()`: 获取聚合根的历史快照
 * `public boolean isChanged()`: 聚合是否发生了变化
 * `public boolean isNew()`：是否为新的聚合
-* `public <T> Collection<T> findNewEntities(Function<R, Collection<T>> getCollection, Predicate<T> isNew)`：在实体集合（例如订单的所有订单明细行中）找到新的实体
+* `public <T> Collection<T> findNewEntitiesById(Function<R, Collection<T>> getCollection, Function<T, ID> getId)`：在实体集合（例如订单的所有订单明细行中）找到新的实体
 * `public <T, ID> Collection<T> findChangedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId)`：在实体集合（例如所有订单明细行中）找到发生变更的实体
 * `public <T, ID> Collection<T> findRemovedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId)`：在实体集合（例如所有订单明细行中）找到已经删除的实体
 
-工具类`DataObjectUtils`提供了对象的对比功能。它可以帮助你修改数据库时只update那些变化了的字段。以Person为例，`DataObjectUtils.getDelta(personSnapshot, personCurrent)`将返回Delta值。如果属性没有发生变化，Delta的对应属性值为null, 否则为修改后的值。下表展示了这种差别，personCurrent是当前值，personSnapshot是旧值。
-
- Object | ID | NAME | AGE | ADDRESS | VERSION
- ------------- |----|-----|-----|-----|----
- personCurrent | 001 | Mike | 20 | Beijing | 1
- personSnapshot | 001 | Mike | 21 | Shanghai | 1
- delta | null | null | 21 | Shanghai | null
+工具类`DataObjectUtils`提供了对象的对比功能。它可以帮助你修改数据库时只update那些变化了的字段。以Person为例，`DataObjectUtils.getChangedFields(personSnapshot, personCurrent)`将返回哪些Field发生了变化。你可以据此按需修改数据库（请参考示例工程）。
 
 与Hibernate的`@Version`类似，聚合根需要实现Versionable接口，以便Repository基于Version实现乐观锁。Repository对聚合的所有持久化操作，都要判断Version。示意SQL如下：
 
@@ -64,7 +58,7 @@ public void checkout(String orderId, CheckoutRequest request) {
         <dependency>
             <groupId>com.github.meixuesong</groupId>
             <artifactId>aggregate-persistence</artifactId>
-            <version>1.0.0</version>
+            <version>1.2</version>
         </dependency>
 ```
 
@@ -159,28 +153,13 @@ void save(Aggregate<Order> orderAggregate) {
 
 ```java
 private void updateAggregateRoot(Aggregate<Order> orderAggregate) {
-    //get changed fields and its value
-    OrderDO delta = getOrderDODelta(orderAggregate);
-    //only update changed fields, avoid update all fields: 
-    // e.g. update sales_order set xxx = ?, version = version + 1 where id = ? and version = ?
-    if (orderMapper.updateByPrimaryKeySelective(delta) != 1) {
-        throw new OptimisticLockException(
-            String.format("Update order (%s) error, it’s not found or changed by another user", 
-                orderAggregate.getRoot().getId())
-        );
+    //only update changed fields, avoid update all fields
+    OrderDO newOrderDO = new OrderDO(orderAggregate.getRoot());
+    Set<String> changedFields = DataObjectUtils.getChangedFields(orderAggregate.getRootSnapshot(), orderAggregate.getRoot());
+    if (orderMapper.updateByPrimaryKeySelective(newOrderDO, changedFields) != 1) {
+        throw new OptimisticLockException(String.format("Update order (%s) error, it's not found or changed by another user",
+                orderAggregate.getRoot().getId()));
     }
-}
-
-private OrderDO getOrderDODelta(Aggregate<Order> orderAggregate) {
-    OrderDO current = new OrderDO(orderAggregate.getRoot());
-    OrderDO old = new OrderDO(orderAggregate.getRootSnapshot());
-    //compare field by field, if field is not changed, its value is null, otherwise its value is current new value
-    OrderDO delta = DataObjectUtils.getDelta(old, current);
-    //because id and version are unchanged, their value are null, so set to new value, and then the mapper can update by id and version
-    delta.setId(current.getId());
-    delta.setVersion(current.getVersion());
-
-    return delta;
 }
 ```
 
@@ -191,39 +170,34 @@ private void removeOrderItems(Aggregate<Order> orderAggregate) {
     Collection<OrderItem> removedEntities = orderAggregate.findRemovedEntities(Order::getItems, OrderItem::getId);
     removedEntities.stream().forEach((item) -> {
         if (orderItemMapper.deleteByPrimaryKey(item.getId()) != 1) {
-            throw new OptimisticLockException(
-                String.format("Delete order item (%d) error, it's not found", item.getId())
-            );
+            throw new OptimisticLockException(String.format("Delete order item (%d) error, it's not found", item.getId()));
         }
     });
 }
 
 private void updateOrderItems(Aggregate<Order> orderAggregate) {
-    Collection<OrderItem> updatedEntities = orderAggregate.findChangedEntities(Order::getItems, OrderItem::getId);
-    updatedEntities.stream().forEach((item) -> {
-        if (orderItemMapper.updateByPrimaryKey(new OrderItemDO(orderAggregate.getRoot().getId(), item)) != 1) {
-            throw new OptimisticLockException(
-                String.format("Update order item (%d) error, it’s not found", item.getId())
-            );
+    Collection<ChangedEntity<OrderItem>> entityPairs = orderAggregate.findChangedEntitiesWithOldValues(Order::getItems, OrderItem::getId);
+    for (ChangedEntity<OrderItem> pair : entityPairs) {
+        Set<String> changedFields = DataObjectUtils.getChangedFields(pair.getOldEntity(), pair.getNewEntity());
+        OrderItemDO orderItemDO = new OrderItemDO(orderAggregate.getRoot().getId(), pair.getNewEntity());
+        if (orderItemMapper.updateByPrimaryKeySelective(orderItemDO, changedFields) != 1) {
+            throw new OptimisticLockException(String.format("Update order item (%d) error, it's not found", orderItemDO.getId()));
         }
-    });
+    }
 }
 
 private void insertOrderItems(Aggregate<Order> orderAggregate) {
-    //OrderItem.getId()为空表示新增实体
     Collection<OrderItem> newEntities = orderAggregate.findNewEntities(Order::getItems, (item) -> item.getId() == null);
     if (newEntities.size() > 0) {
-        List<OrderItemDO> itemDOs = newEntities.stream()
-            .map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item))
-            .collect(Collectors.toList());
+        List<OrderItemDO> itemDOs = newEntities.stream().map(item -> new OrderItemDO(orderAggregate.getRoot().getId(), item)).collect(Collectors.toList());
         orderItemMapper.insertAll(itemDOs);
     }
 }
 ```
 
-`Aggregate<T>`提供的`findXXXEntities`系列方法，都是针对订单明细行这样的实体集合。例如订单明细中，可能增加了商品A，修改了商品B的数量，删除了商品C。`findXXXEntities`方法用于找出这些变更。第1个参数是函数式接口，用于获取实体集合，以便在此集合中识别新增、修改和删除的实体。第2个参数也是函数式接口，获得实体主键值以找到同一实体进行对比（findRemovedEntities, findChangedEntities）或者判断是否为新的实体（findNewEntities）。
+`Aggregate<T>`提供的`findXXXEntities`系列方法，都是针对订单明细行这样的实体集合。例如订单明细中，可能增加了商品A，修改了商品B的数量，删除了商品C。`findXXXEntities`方法用于找出这些变更。第1个参数是函数式接口，用于获取实体集合，以便在此集合中识别新增、修改和删除的实体。第2个参数也是函数式接口，获得实体主键值。
 
-需要提醒的是，当聚合发生变化时，不论聚合根是否发生变化，都应该修改聚合根的版本号，以确保聚合作为一个整体被修改。
+需要提醒的是，当聚合发生变化时，不论聚合根是否发生变化，都应该修改聚合根的版本号，以确保聚合作为一个整体被修改，避免并发修改时产生的数据不一致现象。
 
 ### 3.3 删除订单
 
@@ -241,7 +215,7 @@ public void remove(Aggregate<Order> aggregate) {
 }
 ```
 
-完整的示例代码见[订单聚合持久化项目](https://github.com/meixuesong/aggregate-persistence-sample)
+完整的示例代码见[订单聚合持久化项目](https://github.com/meixuesong/aggregate-persistence-sample)，该示例演示了如何运用Mybatis实现
 
 ## 4. 总结
 总的来说，本项目提供了一种轻量级聚合持久化方案，能够帮助开发者设计干净的领域模型的同时，很好地支持Repository做持久化工作。通过持有聚合根的快照，`Aggregate<T>`可以识别聚合发生了哪些变化，然后Repository使用基于Version的乐观锁和DataObjectUtils在字段属性级别的比较功能，实现按需更新数据库。

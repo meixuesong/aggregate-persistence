@@ -156,7 +156,9 @@ public class AggregateTest {
 
         assertThat(aggregate.isChanged(), is(true));
         assertThat(getNewChildren(aggregate).size(), is(1));
+        assertThat(aggregate.findNewEntitiesById(SampleEntity::getChildren, SampleEntity::getId).size(), is(1));
         assertThat(getChangedChildren(aggregate).size(), is(0));
+        assertThat(aggregate.findChangedEntitiesWithOldValues(SampleEntity::getChildren, SampleEntity::getId).size(), is(0));
         assertThat(getRemovedChildren(aggregate).size(), is(0));
     }
 
@@ -173,6 +175,7 @@ public class AggregateTest {
         assertThat(aggregate.isChanged(), is(true));
         assertThat(getNewChildren(aggregate).size(), is(0));
         assertThat(getChangedChildren(aggregate).size(), is(1));
+        assertThat(aggregate.findChangedEntitiesWithOldValues(SampleEntity::getChildren, SampleEntity::getId).size(), is(1));
         assertThat(getRemovedChildren(aggregate).size(), is(0));
     }
 
@@ -187,6 +190,7 @@ public class AggregateTest {
         assertThat(aggregate.isChanged(), is(true));
         assertThat(getNewChildren(aggregate).size(), is(0));
         assertThat(getChangedChildren(aggregate).size(), is(0));
+        assertThat(aggregate.findChangedEntitiesWithOldValues(SampleEntity::getChildren, SampleEntity::getId).size(), is(0));
         assertThat(getRemovedChildren(aggregate).size(), is(1));
 
         BigDecimal v = new BigDecimal("10.00");

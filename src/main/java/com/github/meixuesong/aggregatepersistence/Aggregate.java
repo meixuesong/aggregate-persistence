@@ -90,7 +90,6 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
-     * This method is deprecated, please use findCollectionDelta instead.
      * Find the new entities. New entities are going to be insert into the DB.
      *
      * <pre><code class="java">
@@ -103,7 +102,6 @@ public class Aggregate<R extends Versionable> {
      * @param <T> The entity type. e.g. OrderItem
      * @return All the entities that has been created.
      */
-    @Deprecated
     public <T> Collection<T> findNewEntities(Function<R, Collection<T>> getCollection, Predicate<T> isNew) {
         Collection<T> newEntities = getCollection.apply(root);
 
@@ -111,7 +109,27 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
-     * This method is deprecated, please use findCollectionDelta instead.
+     * Find the new entities. New entities are going to be insert into the DB.
+     *
+     * <pre><code class="java">
+     Collection&lt;OrderItem&gt; newEntities = orderAggregate.findNewEntitiesById(Order::getItems, OrderItem:getId);
+     //insert all the new entities.
+     * </code></pre>
+     *
+     * @param getCollection The function of the aggregate root, used to get entity collection. e.g. Order:getItems
+     * @param getId The function used to identify whether the entity is new. e.g. OrderItem:getId
+     * @param <T> The entity type. e.g. OrderItem
+     * @return All the entities that has been created.
+     */
+    public <T, ID> Collection<T> findNewEntitiesById(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
+        if (isNew()) {
+            return getCollection.apply(root);
+        } else {
+            return getCollectionNewEntities(getCollection, getId);
+        }
+    }
+
+    /**
      * Find the changed entities. Changed entities are going to be update into the DB.
      * @param getCollection The function of the aggregate root, used to get entity collection. e.g. Order:getItems
      * @param getId The function of get ID. Entity are identified by ID.
@@ -119,7 +137,6 @@ public class Aggregate<R extends Versionable> {
      * @param <ID> The type of the entity id.
      * @return All the entities that has been changed.
      */
-    @Deprecated
     public <T, ID> Collection<T> findChangedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Collection<T> newEntities = getCollection.apply(root);
         Collection<T> oldEntities = getCollection.apply(snapshot);
@@ -143,7 +160,35 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
-     * This method is deprecated, please use findCollectionDelta instead.
+     * Find the changed entities with old values. Changed entities are going to be update into the DB.
+     * @param getCollection The function of the aggregate root, used to get entity collection. e.g. Order:getItems
+     * @param getId The function of get ID. Entity are identified by ID.
+     * @param <T> The entity type
+     * @param <ID> The type of the entity id.
+     * @return All the entities that has been changed.
+     */
+    public <T, ID> Collection<ChangedEntity<T>> findChangedEntitiesWithOldValues(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
+        Collection<T> newEntities = getCollection.apply(root);
+        Collection<T> oldEntities = getCollection.apply(snapshot);
+
+        Map<ID, T> newEntityMap = newEntities.stream().collect(Collectors.toMap(getId, x -> x));
+        Map<ID, T> oldEntityMap = oldEntities.stream().collect(Collectors.toMap(getId, x -> x));
+
+        oldEntityMap.keySet().retainAll(newEntityMap.keySet());
+
+        Collection<ChangedEntity<T>> results = new ArrayList<>();
+        for (Map.Entry<ID, T> entry : oldEntityMap.entrySet()) {
+            T oldEntity = entry.getValue();
+            T newEntity = newEntityMap.get(entry.getKey());
+            if (!deepComparator.isDeepEquals(oldEntity, newEntity)) {
+                results.add(new ChangedEntity<>(oldEntity, newEntity));
+            }
+        }
+
+        return results;
+    }
+
+    /**
      * Find the removed entities. Removed entities are going to be delete logically or physically from the DB.
      * @param getCollection  The function of the aggregate root, used to get entity collection. e.g. Order:getItems
      * @param getId The function of get ID. Entity are identified by ID.
@@ -151,7 +196,6 @@ public class Aggregate<R extends Versionable> {
      * @param <ID> The type of the entity id.
      * @return All the entities that has been removed.
      */
-    @Deprecated
     public <T, ID> Collection<T> findRemovedEntities(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Collection<T> newEntities = getCollection.apply(root);
         Collection<T> oldEntities = getCollection.apply(snapshot);
@@ -164,6 +208,16 @@ public class Aggregate<R extends Versionable> {
         return oldEntities.stream().filter(item -> oldIds.contains(getId.apply(item))).collect(Collectors.toList());
     }
 
+    /**
+     * @Deprecated This method can be replaced with findNewEntities/findNewEntitiesById, findChangedEntities/findChangedEntitiesWithOldValues, findRemovedEntities
+     * Return all entity delta, include NEW, UPDATED and REMOVED entities.
+     * @param getCollection  The function of the aggregate root, used to get entity collection. e.g. Order:getItems
+     * @param getId The function of get ID. Entity are identified by ID.
+     * @param <T> The entity type
+     * @param <ID> The type of the entity id.
+     * @return all entities new, updated or removed
+     */
+    @Deprecated
     public <T, ID> Map<DeltaType, Collection<T>> findCollectionDelta(Function<R, Collection<T>> getCollection, Function<T, ID> getId) {
         Map<DeltaType, Collection<T>> results = new HashMap<>();
 

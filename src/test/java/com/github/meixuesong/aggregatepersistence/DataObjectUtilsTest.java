@@ -20,8 +20,10 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author meixuesong
@@ -69,6 +71,23 @@ public class DataObjectUtilsTest {
         SampleEntity expectedDelta = new SampleEntity(null, null, null, null, Arrays.asList(new SampleEntity(), new SampleEntity()));
 
         assertEquals(expectedDelta, actualDelta);
+    }
+
+    @Test
+    public void should_get_field_names_when_field_changed() {
+        //Given
+        Date birthday = new Date();
+        String id = "ID";
+        int length = 100;
+        String money = "100.00";
+
+        SampleEntity entity1 = new SampleEntity(birthday, id, length, new BigDecimal(money), Arrays.asList(new SampleEntity()));
+        SampleEntity entity2 = new SampleEntity(birthday, id, length, new BigDecimal(money), Arrays.asList(new SampleEntity(), new SampleEntity()));
+
+        //When
+        Set<String> changedFields = DataObjectUtils.getChangedFields(entity1, entity2);
+        assertEquals(1, changedFields.size());
+        assertTrue(changedFields.contains("children"));
     }
 
     @Test

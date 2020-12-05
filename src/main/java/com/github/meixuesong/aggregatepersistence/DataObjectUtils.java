@@ -85,6 +85,36 @@ public class DataObjectUtils {
         return result;
     }
 
+    /**
+     * return the changed field names
+     * @param old object
+     * @param current object
+     * @param ignoredFields
+     * @param <T>
+     * @return set of changed field names
+     */
+    public static <T> Set<String> getChangedFields(T old, T current, String... ignoredFields) {
+        Set<String> results = new HashSet<>();
+
+        Set<String> ignoreFieldSet = new HashSet<>(Arrays.asList(ignoredFields));
+        Collection<Field> fields = ReflectionUtils.getDeepDeclaredFields(current.getClass());
+        for (Field field : fields) {
+            if (ignoreFieldSet.contains(field.getName())) {
+                continue;
+            }
+
+            try {
+                if (! new DeepEquals().isDeepEquals(field.get(old), field.get(current))) {
+                    results.add(field.getName());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return results;
+    }
+
     private static <T> T createInstance(Class<?> aClass) {
         T result;
         try {

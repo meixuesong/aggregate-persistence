@@ -50,12 +50,12 @@ public class JsonDeepCopier implements DeepCopier {
 
     private void createObjectMapper() {
         if (this.mapper == null) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
-            mapper.registerModule(new JavaTimeModule());
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            ObjectMapper tempMapper = new ObjectMapper();
+            tempMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
+            tempMapper.registerModule(new JavaTimeModule());
+            tempMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-            this.mapper = mapper;
+            this.mapper = tempMapper;
         }
     }
 }
