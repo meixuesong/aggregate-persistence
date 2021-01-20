@@ -2,6 +2,10 @@
 
 ![](https://travis-ci.com/meixuesong/aggregate-persistence.svg?branch=master)
 
+可参考：
+* ![DDD之聚合持久化应该怎么做？](https://zhuanlan.zhihu.com/p/334344752)
+* ![聊一聊聚合的持久化](https://zhuanlan.zhihu.com/p/87074950) 
+
 ## 1. 简介
 领域驱动设计(DDD)已经被业界认为是行之有效的复杂问题解决之道。随着微服务的流行，DDD也被更多的团队采纳。然而在DDD落地时，聚合(Aggregate)的持久化一直缺少一种优雅的方式解决。
 
