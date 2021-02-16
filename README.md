@@ -62,7 +62,7 @@ public void checkout(String orderId, CheckoutRequest request) {
         <dependency>
             <groupId>com.github.meixuesong</groupId>
             <artifactId>aggregate-persistence</artifactId>
-            <version>1.2</version>
+            <version>1.2.1</version>
         </dependency>
 ```
 
