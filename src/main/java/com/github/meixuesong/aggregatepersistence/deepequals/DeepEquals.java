@@ -273,7 +273,8 @@ public class DeepEquals {
         Map<Integer, Collection> map = collection2Map(collectionB);
 
         for (Object item : collectionA) {
-            Collection other = map.get(ReflectionUtils.deepHashCode(item));
+            int hashCode = ReflectionUtils.deepHashCode(item);
+            Collection other = map.get(hashCode);
             // fail fast: item not even found in other Collection, no need to continue.
             if (other == null || other.isEmpty()) {
                 return false;
@@ -282,6 +283,7 @@ public class DeepEquals {
             // no hash collision, items must be equivalent or isDeepEquals is false
             if (other.size() == 1) {
                 recursiveObject.push(new DualObject(item, other.iterator().next()));
+                map.remove(hashCode);
             } else {
                 // hash collision: try all collided items against the current item (if 1 equals, we are good - remove it
                 // from collision list, making further comparisons faster)

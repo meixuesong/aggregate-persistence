@@ -402,6 +402,14 @@ public class DeepEqualsTest {
     }
 
     @Test
+    public void testCollectionNotEquals() {
+        Object[] a1 = new Object[]{"alpha", "alpha", "alpha", "alpha"};
+        Object[] a2 = new Object[]{"alpha", "bravo", "charlie", "delta"};
+
+        assertFalse(deepEquals.isDeepEquals(a1, a2));
+    }
+
+    @Test
     public void testHasCustomMethod() {
         assertFalse(ReflectionUtils.hasCustomEquals(EmptyClass.class));
         assertFalse(ReflectionUtils.hasCustomHashCode(Class1.class));
