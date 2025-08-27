@@ -265,4 +265,8 @@ public class Aggregate<R extends Versionable> {
         UPDATED,
         REMOVED;
     }
+
+    public DeepComparator getDeepComparator() {
+        return deepComparator;
+    }
 }

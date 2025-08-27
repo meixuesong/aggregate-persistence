@@ -13,14 +13,11 @@
 
 package com.github.meixuesong.aggregatepersistence;
 
-import com.github.meixuesong.aggregatepersistence.deepequals.DeepEquals;
-import com.github.meixuesong.aggregatepersistence.deepequals.ReflectionUtils;
+import com.cedarsoftware.util.DeepEquals;
+import com.cedarsoftware.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The data object utiles. Data object are persistence object, which is used to persistent to DB
@@ -39,6 +36,11 @@ import java.util.Set;
  * @author meixuesong
  */
 public class DataObjectUtils {
+    // add empty settings, let DeepEquals.deepEquals() ignore equals method
+    private static final Map<String, Object> options = new HashMap<String, Object>() {{
+        put(DeepEquals.IGNORE_CUSTOM_EQUALS, new HashSet<>());
+    }};
+
     private DataObjectUtils() {
         throw new IllegalStateException("Utility class");
     }
@@ -73,7 +75,7 @@ public class DataObjectUtils {
             }
 
             try {
-                if (! new DeepEquals().isDeepEquals(field.get(old), field.get(current))) {
+                if (! DeepEquals.deepEquals(field.get(old), field.get(current), options)) {
                     field.set(result, field.get(current));
                 }
             } catch (Exception e) {
@@ -104,7 +106,7 @@ public class DataObjectUtils {
             }
 
             try {
-                if (! new DeepEquals().isDeepEquals(field.get(old), field.get(current))) {
+                if (! DeepEquals.deepEquals(field.get(old), field.get(current), options)) {
                     results.add(field.getName());
                 }
             } catch (Exception e) {

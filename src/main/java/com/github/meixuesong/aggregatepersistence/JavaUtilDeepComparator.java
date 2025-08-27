@@ -13,7 +13,12 @@
 
 package com.github.meixuesong.aggregatepersistence;
 
-import com.github.meixuesong.aggregatepersistence.deepequals.DeepEquals;
+import com.cedarsoftware.util.DeepEquals;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * JavaUtilDeepComparator use deepEquals, which is based on https://github.com/jdereg/java-util, to implement the DeepComparator interface.
@@ -21,8 +26,49 @@ import com.github.meixuesong.aggregatepersistence.deepequals.DeepEquals;
  * @author meixuesong
  */
 public class JavaUtilDeepComparator implements DeepComparator {
+    private Set<Class<?>> ignoreCustomEqualsClasses = new HashSet<>();
+
     @Override
     public <T> boolean isDeepEquals(T a, T b) {
-        return new DeepEquals().isDeepEquals(a, b);
+        if (a == null && b == null) {
+            return true;
+        }
+
+        if (a != null && b != null) {
+            Map<String, Object> options = new HashMap<>();
+            Set<Class<?>> ignoreCustomEquals = new HashSet<>(ignoreCustomEqualsClasses);
+            options.put(DeepEquals.IGNORE_CUSTOM_EQUALS, ignoreCustomEquals);
+
+            return DeepEquals.deepEquals(a, b, options);
+        }
+
+        return false;
+    }
+
+
+    public void addIgnoreEqualsClass(Class<?> clazz) {
+        if (ignoreCustomEqualsClasses == null) {
+            ignoreCustomEqualsClasses = new HashSet<>();
+        }
+        ignoreCustomEqualsClasses.add(clazz);
+    }
+
+    public void addIgnoreEqualsClasses(Set<Class<?>> clazzes) {
+        if (ignoreCustomEqualsClasses == null) {
+            ignoreCustomEqualsClasses = new HashSet<>();
+        }
+        ignoreCustomEqualsClasses.addAll(clazzes);
+    }
+
+    public void removeIgnoreEqualsClass(Class<?> clazz) {
+        if (ignoreCustomEqualsClasses != null) {
+            ignoreCustomEqualsClasses.remove(clazz);
+        }
+    }
+
+    public void removeIgnoreEqualsClasses(Set<Class<?>> clazzes) {
+        if (ignoreCustomEqualsClasses != null) {
+            ignoreCustomEqualsClasses.removeAll(clazzes);
+        }
     }
 }

@@ -226,3 +226,5 @@ public void remove(Aggregate<Order> aggregate) {
 
 ## 5. Changelog
 1.2 修改了之前采用对比字段值，如果为null时判断为未修改的方式。新方式改为使用`DataObjectUtils.getChangedFields`获取变更的字段名。
+
+1.3 直接依赖做 ![DeepEquals](https://github.com/jdereg/java-util) 比较。

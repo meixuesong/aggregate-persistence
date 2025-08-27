@@ -96,7 +96,8 @@ public class AggregateTest {
         entity.setLength(10.0123456789F);
         Aggregate<SampleEntity> aggregate = AggregateFactory.createAggregate(entity);
 
-        entity.setLength(10.01234F);
+        // 6位小数精度
+        entity.setLength(10.012345F);
         assertThat(aggregate.isChanged(), is(false));
 
         entity.setLength(10.0123F);
