@@ -66,6 +66,14 @@ public class Aggregate<R extends Versionable> {
     }
 
     /**
+     * Set the aggregate root
+     * @param root the aggregate root
+     */
+    public void setRoot(R root) {
+        this.root = root;
+    }
+
+    /**
      * The snapshot of the aggregate root
      * @return Aggregate root snapshot
      */

@@ -228,3 +228,5 @@ public void remove(Aggregate<Order> aggregate) {
 1.2 修改了之前采用对比字段值，如果为null时判断为未修改的方式。新方式改为使用`DataObjectUtils.getChangedFields`获取变更的字段名。
 
 1.3 直接依赖做 ![DeepEquals](https://github.com/jdereg/java-util) 比较。
+
+1.3.2 升级到JDK 21，升级maven-compiler-plugin到3.12.1，mockito到4.11.0以确保JDK21兼容性。
